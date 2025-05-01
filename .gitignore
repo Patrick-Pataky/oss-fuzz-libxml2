@@ -6,6 +6,8 @@
 *.swp
 .venv
 .gdb_history
+note.md
+test.sh
 
 # IntelliJ IDEA
 /.idea
