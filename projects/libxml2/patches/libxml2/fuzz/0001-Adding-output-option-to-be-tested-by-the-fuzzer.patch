@@ -1,0 +1,82 @@
+From 740c5beae25e5ead04cc0c6943dd0a89fcb65fbb Mon Sep 17 00:00:00 2001
+From: Patrick-Pataky <patrick.pataky@epfl.ch>
+Date: Fri, 2 May 2025 17:11:04 +0200
+Subject: [PATCH] Adding --output option to be tested by the fuzzer
+
+---
+ fuzz/lint.c | 31 +++++++++++++++++++++++++++++++
+ 1 file changed, 31 insertions(+)
+
+diff --git a/fuzz/lint.c b/fuzz/lint.c
+index 82de44b2..86a4399a 100644
+--- a/fuzz/lint.c
++++ b/fuzz/lint.c
+@@ -8,6 +8,7 @@
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <unistd.h>
++#include <string.h>
+ 
+ #include <libxml/catalog.h>
+ #include <libxml/parser.h>
+@@ -101,6 +102,24 @@ pushArg(const char *str) {
+     vars.argv[vars.argi++] = str;
+ }
+ 
++/**
++ * Setup output file (to use with --output option).
++ */
++static char* setupOutput(void) {
++    char *tempPath = strdup("/tmp/xmllint-XXXXXX");
++    int fd = mkstemp(tempPath);
++
++    // if error
++    if (fd == -1) {
++        perror("mkstemp");
++        abort();
++    }
++
++    close(fd);
++
++    return tempPath;
++}
++
+ int
+ LLVMFuzzerInitialize(int *argc ATTRIBUTE_UNUSED,
+                      char ***argv ATTRIBUTE_UNUSED) {
+@@ -130,6 +149,7 @@ LLVMFuzzerTestOneInput(const char *data, size_t size) {
+     size_t ssize, docSize, i;
+     unsigned uval;
+     int ival;
++    char *outputPath = NULL;
+ 
+     if (xmlMemUsed() != 0) {
+         fprintf(stderr, "Undetected leak in previous iteration\n");
+@@ -172,6 +192,13 @@ LLVMFuzzerTestOneInput(const char *data, size_t size) {
+             break;
+     }
+ 
++    /* --output, with prob 1/2 */
++    if (uval & 1) {
++        outputPath = setupOutput();
++        pushArg("--output");
++        pushArg(outputPath);
++    }
++
+     uval = xmlFuzzReadInt(4);
+     if (uval > 0) {
+         if (size <= (INT_MAX - 2000) / 20)
+@@ -235,6 +262,10 @@ LLVMFuzzerTestOneInput(const char *data, size_t size) {
+ 
+ exit:
+     xmlFuzzDataCleanup();
++    if (outputPath != NULL) {
++        unlink(outputPath);
++        free(outputPath);
++    }
+     free(vars.argv);
+     return(0);
+ }
+-- 
+2.49.0
+
