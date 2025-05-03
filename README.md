@@ -26,6 +26,12 @@ mkdir -p build/out/corpus
 python3 infra/helper.py run_fuzzer libxml2 <fuzzer> --corpus-dir build/out/corpus
 ```
 
+5. Generate coverage:
+```bash
+python3 infra/helper.py build_fuzzers libxml2 --sanitizer coverage
+python3 infra/helper.py coverage libxml2 --fuzz-target <fuzzer> --corpus-dir build/out/corpus
+```
+
 ## Modifying the harnesses
 After modifying the harnesses, first commit the changes to the `libxml2` submodule. Then, generate a patch file to be able to reproduce the changes:
 ```bash
