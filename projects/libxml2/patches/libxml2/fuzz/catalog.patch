@@ -1,19 +1,23 @@
-From 98b2c11adb41e943d18df38933a2856d476fc3e1 Mon Sep 17 00:00:00 2001
+From 8be49f0ff9328e66c3b42855094e5477e3db0b2c Mon Sep 17 00:00:00 2001
 From: Patrick-Pataky <patrick.pataky@epfl.ch>
 Date: Mon, 5 May 2025 13:51:43 +0200
-Subject: [PATCH 2/2] [catalog]: Adding new catalog's fuzzer
+Subject: [PATCH] [catalog]: Adding new catalog's fuzzer
 
+[catalog]: Updated main virtualmachine to be able to work
+
+[catalog]: Fixed warnings, and modified build script to support new catalog fuzzer
 ---
- fuzz/catalog.c | 381 +++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 381 insertions(+)
+ fuzz/catalog.c         | 405 +++++++++++++++++++++++++++++++++++++++++
+ fuzz/oss-fuzz-build.sh |   4 +-
+ 2 files changed, 407 insertions(+), 2 deletions(-)
  create mode 100644 fuzz/catalog.c
 
 diff --git a/fuzz/catalog.c b/fuzz/catalog.c
 new file mode 100644
-index 00000000..9946f621
+index 00000000..e68550be
 --- /dev/null
 +++ b/fuzz/catalog.c
-@@ -0,0 +1,381 @@
+@@ -0,0 +1,405 @@
 +/*
 + * catalog.c: a libFuzzer target to test the XML catalog API.
 + *
@@ -44,16 +48,24 @@ index 00000000..9946f621
 +#define MAX_COPY_OPS     20
 +
 +typedef enum {
++    OP_CREATE_INTEGER,
++    OP_CREATE_STRING,
++    OP_DUP_INTEGER,
++    OP_DUP_STRING,
++    OP_DUP_CATALOG,
++
 +    OP_NEW_SGML_CATALOG,
 +    OP_NEW_XML_CATALOG,
 +    OP_LOAD_CATALOG,
-+    OP_LOAD_CATALOGS,
-+    OP_FREE_CATALOGS,
 +    OP_CATALOG_GLOBAL_ADD,
 +    OP_CATALOG_GLOBAL_REMOVE,
 +
 +    OP_MAX
 +} opType;
++
++// Num of integer registers
++#define MAX_INT_REGS   64
++#define MAX_INT_REGS_MASK (MAX_INT_REGS - 1)
 +
 +// Num of string registers
 +#define MAX_STR_REGS   64
@@ -70,6 +82,7 @@ index 00000000..9946f621
 +
 +typedef struct {
 +    /* Indexes point beyond the most recent item */
++    int intIdx;
 +    int stringIdx;
 +    int catalogIdx;
 +
@@ -78,6 +91,7 @@ index 00000000..9946f621
 +    const char *opName;
 +
 +    /* Registers */
++    int integers[MAX_INT_REGS];
 +    xmlChar *strings[MAX_STR_REGS];
 +    xmlCatalogPtr catalogs[MAX_CAT_REGS];
 +} xmlFuzzApiVars;
@@ -96,6 +110,26 @@ index 00000000..9946f621
 +static void
 +endOp(void) {
 +    DEBUG(" )\n");
++}
++
++/* Integers */
++
++static int
++getInt(int offset) {
++    int idx = (vars->intIdx - offset - 1) & MAX_INT_REGS_MASK;
++    DEBUG(" %d", vars->integers[idx]);
++    return vars->integers[idx];
++}
++
++static void
++setInt(int offset, int n) {
++    int idx = (vars->intIdx - offset - 1) & MAX_INT_REGS_MASK;
++    vars->integers[idx] = n;
++}
++
++static void
++incIntIdx(void) {
++    vars->intIdx = (vars->intIdx + 1) & MAX_INT_REGS_MASK;
 +}
 +
 +/* Strings */
@@ -201,6 +235,44 @@ index 00000000..9946f621
 +    vars->catalogIdx = (vars->catalogIdx + 1) & MAX_CAT_REGS_MASK;
 +}
 +
++// Duplicate a random element in the given register
++static void
++opDup(int op) {
++    int offset;
++
++    switch (op) {
++        case OP_DUP_INTEGER:
++            incIntIdx(); break;
++        case OP_DUP_STRING:
++            incStrIdx(); break;
++        case OP_DUP_CATALOG:
++            incCatalogIdx(); break;
++        default:
++            break;
++    }
++
++    offset = (xmlFuzzReadInt(1) + 1) & MAX_INT_REGS_MASK;
++
++    if (offset != 0) {
++        startOp("dup");
++        switch (op) {
++            case OP_DUP_INTEGER:
++                setInt(0, getInt(offset));
++                endOp();
++                break;
++            case OP_DUP_STRING:
++                copyStr(0, getStr(offset));
++                endOp();
++                break;
++            case OP_DUP_CATALOG:
++                setCatalog(0, getCatalog(offset));
++                break;
++            default:
++                break;
++        }
++    }
++}
++
 +/* Main part */
 +
 +int
@@ -244,18 +316,33 @@ index 00000000..9946f621
 +     * - memory management and other adjustments
 +     * - endOp for void functions
 +     */
-+
 +    while (xmlFuzzBytesRemaining() && vars->opCount++ < MAX_OPS) {
 +        size_t readSize;
-+        int op = xmlFuzzReadInt(1);
++        int op = xmlFuzzReadInt(1) % OP_MAX;
 +        int oomReport = -1; /* -1 means unknown */
 +        int ioReport = 0;
 +
 +        vars->opName = "[unset]";
 +
 +        switch (op) {
++            case OP_CREATE_INTEGER:
++                incIntIdx();
++                setInt(0, (int) xmlFuzzReadInt(4));
++                break;
++
++            case OP_CREATE_STRING:
++                incStrIdx();
++                copyStr(0, BAD_CAST xmlFuzzReadString(&readSize));
++                break;
++
++            case OP_DUP_INTEGER:
++            case OP_DUP_STRING:
++            case OP_DUP_CATALOG:
++                opDup(op);
++                break;
++
 +            case OP_NEW_SGML_CATALOG: {
-+                startOp("NEW_SGML_CATALOG");
++                startOp("xmlNewCatalog (SGML)");
 +                xmlCatalogPtr cat = xmlNewCatalog(1);
 +                setCatalog(0, cat);
 +                incCatalogIdx();
@@ -264,7 +351,7 @@ index 00000000..9946f621
 +            }
 +
 +            case OP_NEW_XML_CATALOG: {
-+                startOp("NEW_XML_CATALOG");
++                startOp("xmlNewCatalog (XML)");
 +                xmlCatalogPtr cat = xmlNewCatalog(0);
 +                setCatalog(0, cat);
 +                incCatalogIdx();
@@ -273,89 +360,31 @@ index 00000000..9946f621
 +            }
 +
 +            case OP_LOAD_CATALOG: {
-+                if (remaining < 1) break;
-+                uint8_t strLen = *ptr++ % MAX_STR_LEN;
-+                remaining--;
-+
-+                if (remaining < strLen) break;
-+                xmlChar *filename = uncheckedStrndup(ptr, strLen);
-+                ptr += strLen;
-+                remaining -= strLen;
-+
-+                startOp("LOAD_CATALOG");
-+                xmlCatalogPtr cat = xmlLoadACatalog((const char *) filename);
-+                xmlFree(filename);
-+                setCatalog(0, cat);
-+                incCatalogIdx();
-+                endOp();
-+                break;
-+            }
-+
-+            case OP_LOAD_CATALOGS: {
-+                if (remaining < 1) break;
-+                uint8_t strLen = *ptr++ % MAX_STR_LEN;
-+                remaining--;
-+
-+                if (remaining < strLen) break;
-+                xmlChar *paths = uncheckedStrndup(ptr, strLen);
-+                ptr += strLen;
-+                remaining -= strLen;
-+
-+                startOp("LOAD_CATALOGS");
-+                xmlLoadCatalogs((const char *) paths);
-+                xmlFree(paths);
-+                endOp();
-+                break;
-+            }
-+
-+            case OP_FREE_CATALOGS: {
-+                startOp("FREE_CATALOGS");
-+                for (int i = 0; i < MAX_CAT_REGS; i++) {
-+                  if (vars->catalogs[i]) {
-+                    xmlFreeCatalog(vars->catalogs[i]);
-+                    vars->catalogs[i] = NULL;
-+                  }
-+                }
++                startOp("xmlLoadCatalog");
++                incIntIdx();
++                setInt(0,
++                    xmlLoadCatalog(getCStr(0))
++                );
 +                endOp();
 +                break;
 +            }
 +
 +            case OP_CATALOG_GLOBAL_ADD: {
-+                if (remaining < 3) break;
-+                uint8_t tlen = *ptr++ % MAX_STR_LEN;
-+                uint8_t olen = *ptr++ % MAX_STR_LEN;
-+                uint8_t rlen = *ptr++ % MAX_STR_LEN;
-+                remaining -= 3;
-+
-+                if (remaining < tlen + olen + rlen) break;
-+
-+                xmlChar *type = uncheckedStrndup(ptr, tlen); ptr += tlen;
-+                xmlChar *orig = uncheckedStrndup(ptr, olen); ptr += olen;
-+                xmlChar *repl = uncheckedStrndup(ptr, rlen); ptr += rlen;
-+                remaining -= tlen + olen + rlen;
-+
-+                startOp("CATALOG_GLOBAL_ADD");
-+                xmlCatalogAdd(type, orig, repl);
-+                xmlFree(type);
-+                xmlFree(orig);
-+                xmlFree(repl);
++                startOp("xmlCatalogAdd");
++                incIntIdx();
++                setInt(0,
++                    xmlCatalogAdd(getStr(0), getStr(1), getStr(2))
++                );
 +                endOp();
 +                break;
 +            }
 +
 +            case OP_CATALOG_GLOBAL_REMOVE: {
-+                if (remaining < 1) break;
-+                uint8_t vlen = *ptr++ % MAX_STR_LEN;
-+                remaining--;
-+
-+                if (remaining < vlen) break;
-+                xmlChar *val = uncheckedStrndup(ptr, vlen);
-+                ptr += vlen;
-+                remaining -= vlen;
-+
-+                startOp("CATALOG_GLOBAL_REMOVE");
-+                xmlCatalogRemove(val);
-+                xmlFree(val);
++                startOp("xmlCatalogRemove");
++                incIntIdx();
++                setInt(0,
++                    xmlCatalogRemove(getStr(0))
++                );
 +                endOp();
 +                break;
 +            }
@@ -367,11 +396,11 @@ index 00000000..9946f621
 +        xmlFuzzCheckFailureReport(vars->opName, oomReport, ioReport);
 +    }
 +
-+    for (int i = 0; i < MAX_STR_REGS; i++)
++    for (i = 0; i < MAX_STR_REGS; i++)
 +        if (vars->strings[i])
 +            xmlFree(vars->strings[i]);
 +
-+    for (int i = 0; i < MAX_CAT_REGS; i++)
++    for (i = 0; i < MAX_CAT_REGS; i++)
 +        if (vars->catalogs[i])
 +            xmlFreeCatalog(vars->catalogs[i]);
 +
@@ -394,7 +423,28 @@ index 00000000..9946f621
 +    return xmlFuzzMutateChunks(chunks, data, size, maxSize, seed,
 +                               LLVMFuzzerMutate);
 +}
-+
+diff --git a/fuzz/oss-fuzz-build.sh b/fuzz/oss-fuzz-build.sh
+index 07beeb10..b8b60133 100755
+--- a/fuzz/oss-fuzz-build.sh
++++ b/fuzz/oss-fuzz-build.sh
+@@ -39,7 +39,7 @@ make clean-corpus
+ make fuzz.o
+ 
+ for fuzzer in \
+-    api html lint reader regexp schema uri valid xinclude xml xpath
++    api html lint reader regexp schema uri valid xinclude xml xpath catalog
+ do
+     OBJS="$fuzzer.o"
+     if [ "$fuzzer" = lint ]; then
+@@ -53,7 +53,7 @@ do
+         $LIB_FUZZING_ENGINE \
+         ../.libs/libxml2.a -Wl,-Bstatic -lz -llzma -Wl,-Bdynamic
+ 
+-    if [ $fuzzer != api ]; then
++    if [ $fuzzer != "api" ] && [ $fuzzer != "catalog" ]; then
+         [ -e seed/$fuzzer ] || make seed/$fuzzer.stamp
+         zip -j $OUT/${fuzzer}_seed_corpus.zip seed/$fuzzer/*
+     fi
 -- 
 2.49.0
 
