@@ -1,0 +1,400 @@
+From 98b2c11adb41e943d18df38933a2856d476fc3e1 Mon Sep 17 00:00:00 2001
+From: Patrick-Pataky <patrick.pataky@epfl.ch>
+Date: Mon, 5 May 2025 13:51:43 +0200
+Subject: [PATCH 2/2] [catalog]: Adding new catalog's fuzzer
+
+---
+ fuzz/catalog.c | 381 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 381 insertions(+)
+ create mode 100644 fuzz/catalog.c
+
+diff --git a/fuzz/catalog.c b/fuzz/catalog.c
+new file mode 100644
+index 00000000..9946f621
+--- /dev/null
++++ b/fuzz/catalog.c
+@@ -0,0 +1,381 @@
++/*
++ * catalog.c: a libFuzzer target to test the XML catalog API.
++ *
++ */
++
++#include <stdlib.h>
++#include <string.h>
++
++#ifndef XML_DEPRECATED
++  #define XML_DEPRECATED
++#endif
++
++#include <libxml/catalog.h>
++#include <libxml/HTMLtree.h>
++#include <libxml/parser.h>
++#include <libxml/tree.h>
++#include <libxml/xmlerror.h>
++#include "fuzz.h"
++
++#if 0
++  #define DEBUG printf
++#else
++  #define DEBUG(...)
++#endif
++
++#define MAX_CONTENT     100
++#define MAX_COPY_NODES   50
++#define MAX_COPY_OPS     20
++
++typedef enum {
++    OP_NEW_SGML_CATALOG,
++    OP_NEW_XML_CATALOG,
++    OP_LOAD_CATALOG,
++    OP_LOAD_CATALOGS,
++    OP_FREE_CATALOGS,
++    OP_CATALOG_GLOBAL_ADD,
++    OP_CATALOG_GLOBAL_REMOVE,
++
++    OP_MAX
++} opType;
++
++// Num of string registers
++#define MAX_STR_REGS   64
++#define MAX_STR_REGS_MASK (MAX_STR_REGS - 1)
++#define MAX_STR_LEN   128
++
++// Num of catalog registers
++#define MAX_CAT_REGS   16
++#define MAX_CAT_REGS_MASK (MAX_CAT_REGS - 1)
++
++// Limit the total number of iterations with a single
++// random output
++#define MAX_OPS      1000
++
++typedef struct {
++    /* Indexes point beyond the most recent item */
++    int stringIdx;
++    int catalogIdx;
++
++    int opCount;
++
++    const char *opName;
++
++    /* Registers */
++    xmlChar *strings[MAX_STR_REGS];
++    xmlCatalogPtr catalogs[MAX_CAT_REGS];
++} xmlFuzzApiVars;
++
++static xmlFuzzApiVars varsStruct;
++static xmlFuzzApiVars *const vars = &varsStruct;
++
++/* Debug output */
++
++static void
++startOp(const char *name) {
++    vars->opName = name;
++    DEBUG("%s(", name);
++}
++
++static void
++endOp(void) {
++    DEBUG(" )\n");
++}
++
++/* Strings */
++
++static const xmlChar *
++getStr(int offset) {
++    int idx = (vars->stringIdx - offset - 1) & MAX_STR_REGS_MASK;
++    const xmlChar *str = vars->strings[idx];
++
++    if (str == NULL)
++        DEBUG(" NULL");
++    else
++        DEBUG(" \"%.20s\"", str);
++
++    return str;
++}
++
++static const char *
++getCStr(int offset) {
++    return (const char *) getStr(offset);
++}
++
++static void
++setStr(int offset, xmlChar *str) {
++    xmlChar **strings = vars->strings;
++    int idx = (vars->stringIdx - offset - 1) & MAX_STR_REGS_MASK;
++    xmlChar *oldString = strings[idx];
++
++    strings[idx] = str;
++    if (oldString)
++        xmlFree(oldString);
++}
++
++static void
++moveStr(int offset, xmlChar *str) {
++    if (xmlStrlen(str) > 1000) {
++        setStr(offset, NULL);
++        xmlFree(str);
++    } else {
++        setStr(offset, str);
++    }
++}
++
++/*
++ * This doesn't use xmlMalloc and can't fail because of malloc failure
++ * injection.
++ */
++static xmlChar *
++uncheckedStrndup(const xmlChar *str, int size) {
++    xmlChar *copy;
++
++    if (str == NULL)
++        return NULL;
++
++    copy = BAD_CAST strndup((const char *) str, size);
++    if (copy == NULL) {
++        fprintf(stderr, "out of memory\n");
++        abort();
++    }
++
++    return copy;
++}
++
++static xmlChar *
++uncheckedStrdup(const xmlChar *str) {
++    return uncheckedStrndup(str, MAX_CONTENT);
++}
++
++static void
++copyStr(int offset, const xmlChar *str) {
++    setStr(offset, uncheckedStrdup(str));
++}
++
++static void
++incStrIdx(void) {
++    vars->stringIdx = (vars->stringIdx + 1) & MAX_STR_REGS_MASK;
++}
++
++/* Catalogs */
++
++static xmlCatalogPtr
++getCatalog(int offset) {
++    int idx = (vars->catalogIdx - offset - 1) & MAX_CAT_REGS_MASK;
++    xmlCatalogPtr catalog = vars->catalogs[idx];
++
++    DEBUG(" %p", catalog);
++    return catalog;
++}
++
++static void
++setCatalog(int offset, xmlCatalogPtr catalog) {
++    xmlCatalogPtr *catalogs = vars->catalogs;
++    int idx = (vars->catalogIdx - offset - 1) & MAX_CAT_REGS_MASK;
++    xmlCatalogPtr oldCatalog = catalogs[idx];
++
++    catalogs[idx] = catalog;
++    if (oldCatalog)
++        xmlFreeCatalog(oldCatalog);
++}
++
++static void
++incCatalogIdx(void) {
++    vars->catalogIdx = (vars->catalogIdx + 1) & MAX_CAT_REGS_MASK;
++}
++
++/* Main part */
++
++int
++LLVMFuzzerInitialize(int *argc ATTRIBUTE_UNUSED,
++                     char ***argv ATTRIBUTE_UNUSED) {
++    xmlFuzzMemSetup();
++    xmlInitParser();
++    xmlInitializeCatalog();
++    xmlCatalogSetDefaults(XML_CATA_ALLOW_ALL);
++    xmlSetGenericErrorFunc(NULL, xmlFuzzErrorFunc);
++
++    return 0;
++}
++
++int
++LLVMFuzzerTestOneInput(const char *data, size_t size) {
++    size_t failurePos;
++    int i;
++
++    if (size > 1000)
++        return 0;
++
++    memset(vars, 0, sizeof(*vars));
++
++    xmlFuzzDataInit(data, size);
++
++    failurePos = xmlFuzzReadInt(4) % (size * 50 + 10);
++    xmlFuzzInjectFailure(failurePos);
++
++    /*
++     * Interpreter loop
++     *
++     * Processing an opcode typically involves
++     *
++     * - startOp for debugging
++     * - increase output register index if non-void
++     * - get arguments from input registers
++     * - invoke API function
++     * - set oomReport
++     * - set output register
++     * - memory management and other adjustments
++     * - endOp for void functions
++     */
++
++    while (xmlFuzzBytesRemaining() && vars->opCount++ < MAX_OPS) {
++        size_t readSize;
++        int op = xmlFuzzReadInt(1);
++        int oomReport = -1; /* -1 means unknown */
++        int ioReport = 0;
++
++        vars->opName = "[unset]";
++
++        switch (op) {
++            case OP_NEW_SGML_CATALOG: {
++                startOp("NEW_SGML_CATALOG");
++                xmlCatalogPtr cat = xmlNewCatalog(1);
++                setCatalog(0, cat);
++                incCatalogIdx();
++                endOp();
++                break;
++            }
++
++            case OP_NEW_XML_CATALOG: {
++                startOp("NEW_XML_CATALOG");
++                xmlCatalogPtr cat = xmlNewCatalog(0);
++                setCatalog(0, cat);
++                incCatalogIdx();
++                endOp();
++                break;
++            }
++
++            case OP_LOAD_CATALOG: {
++                if (remaining < 1) break;
++                uint8_t strLen = *ptr++ % MAX_STR_LEN;
++                remaining--;
++
++                if (remaining < strLen) break;
++                xmlChar *filename = uncheckedStrndup(ptr, strLen);
++                ptr += strLen;
++                remaining -= strLen;
++
++                startOp("LOAD_CATALOG");
++                xmlCatalogPtr cat = xmlLoadACatalog((const char *) filename);
++                xmlFree(filename);
++                setCatalog(0, cat);
++                incCatalogIdx();
++                endOp();
++                break;
++            }
++
++            case OP_LOAD_CATALOGS: {
++                if (remaining < 1) break;
++                uint8_t strLen = *ptr++ % MAX_STR_LEN;
++                remaining--;
++
++                if (remaining < strLen) break;
++                xmlChar *paths = uncheckedStrndup(ptr, strLen);
++                ptr += strLen;
++                remaining -= strLen;
++
++                startOp("LOAD_CATALOGS");
++                xmlLoadCatalogs((const char *) paths);
++                xmlFree(paths);
++                endOp();
++                break;
++            }
++
++            case OP_FREE_CATALOGS: {
++                startOp("FREE_CATALOGS");
++                for (int i = 0; i < MAX_CAT_REGS; i++) {
++                  if (vars->catalogs[i]) {
++                    xmlFreeCatalog(vars->catalogs[i]);
++                    vars->catalogs[i] = NULL;
++                  }
++                }
++                endOp();
++                break;
++            }
++
++            case OP_CATALOG_GLOBAL_ADD: {
++                if (remaining < 3) break;
++                uint8_t tlen = *ptr++ % MAX_STR_LEN;
++                uint8_t olen = *ptr++ % MAX_STR_LEN;
++                uint8_t rlen = *ptr++ % MAX_STR_LEN;
++                remaining -= 3;
++
++                if (remaining < tlen + olen + rlen) break;
++
++                xmlChar *type = uncheckedStrndup(ptr, tlen); ptr += tlen;
++                xmlChar *orig = uncheckedStrndup(ptr, olen); ptr += olen;
++                xmlChar *repl = uncheckedStrndup(ptr, rlen); ptr += rlen;
++                remaining -= tlen + olen + rlen;
++
++                startOp("CATALOG_GLOBAL_ADD");
++                xmlCatalogAdd(type, orig, repl);
++                xmlFree(type);
++                xmlFree(orig);
++                xmlFree(repl);
++                endOp();
++                break;
++            }
++
++            case OP_CATALOG_GLOBAL_REMOVE: {
++                if (remaining < 1) break;
++                uint8_t vlen = *ptr++ % MAX_STR_LEN;
++                remaining--;
++
++                if (remaining < vlen) break;
++                xmlChar *val = uncheckedStrndup(ptr, vlen);
++                ptr += vlen;
++                remaining -= vlen;
++
++                startOp("CATALOG_GLOBAL_REMOVE");
++                xmlCatalogRemove(val);
++                xmlFree(val);
++                endOp();
++                break;
++            }
++
++            default:
++                break;
++        }
++
++        xmlFuzzCheckFailureReport(vars->opName, oomReport, ioReport);
++    }
++
++    for (int i = 0; i < MAX_STR_REGS; i++)
++        if (vars->strings[i])
++            xmlFree(vars->strings[i]);
++
++    for (int i = 0; i < MAX_CAT_REGS; i++)
++        if (vars->catalogs[i])
++            xmlFreeCatalog(vars->catalogs[i]);
++
++    xmlFuzzInjectFailure(0);
++    xmlCatalogCleanup();
++    xmlFuzzDataCleanup();
++    xmlResetLastError();
++    return(0);
++}
++
++//TODO: to improve??
++size_t
++LLVMFuzzerCustomMutator(char *data, size_t size, size_t maxSize,
++                        unsigned seed) {
++    static const xmlFuzzChunkDesc chunks[] = {
++        { 4, XML_FUZZ_PROB_ONE / 10 }, /* failurePos */
++        { 0, 0 }
++    };
++
++    return xmlFuzzMutateChunks(chunks, data, size, maxSize, seed,
++                               LLVMFuzzerMutate);
++}
++
+-- 
+2.49.0
+
