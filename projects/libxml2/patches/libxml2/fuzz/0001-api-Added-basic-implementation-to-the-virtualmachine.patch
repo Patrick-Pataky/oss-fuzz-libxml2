@@ -1,0 +1,54 @@
+From f4431b8d4bf9976bad92df58abebe7acbc538b36 Mon Sep 17 00:00:00 2001
+From: Patrick-Pataky <patrick.pataky@epfl.ch>
+Date: Mon, 5 May 2025 10:41:27 +0200
+Subject: [PATCH] [api] Added basic implementation to the virtualmachine to
+ also test htmlSetMetaEncoding
+
+---
+ fuzz/api.c | 30 +++++++++++++++++++++++++++++-
+ 1 file changed, 29 insertions(+), 1 deletion(-)
+
+diff --git a/fuzz/api.c b/fuzz/api.c
+index ba738db4..9899fa3f 100644
+--- a/fuzz/api.c
++++ b/fuzz/api.c
+@@ -3000,7 +3000,35 @@ LLVMFuzzerTestOneInput(const char *data, size_t size) {
+             }
+ 
+             case OP_HTML_SET_META_ENCODING:
+-                /* TODO (can destroy inner text) */
++                // This test doesn't modify the document for
++                // future tests
++                startOp("htmlSetMetaEncoding");
++
++                incIntIdx();
++
++                xmlDocPtr originalDoc = getDoc(1);
++                xmlDocPtr copyDoc = xmlCopyDoc(originalDoc, 1);
++
++                if (copyDoc != NULL)
++                    oomReport = 0;
++
++                // default result is error
++                int result = -1;
++
++                if (copyDoc != NULL) {
++                    result = htmlSetMetaEncoding(
++                        copyDoc,
++                        // not getStr(0) to allow more combinations possible
++                        getStr(1)
++                    );
++
++                    xmlFreeDoc(copyDoc);
++                    copyDoc = NULL;
++                }
++
++                setInt(0, result);
++
++                endOp();
+                 break;
+ 
+             case OP_HTML_IS_BOOLEAN_ATTR:
+-- 
+2.49.0
+
