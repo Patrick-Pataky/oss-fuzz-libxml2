@@ -5,6 +5,7 @@
 1. Clone the submodule (the libxml2 library):
 ```bash
 git submodule update --init --recursive
+git reset --hard 1039cd53
 ```
 
 2. Build the libxml2 image:
@@ -43,6 +44,11 @@ To apply a patch from another person, use the following command:
 ./patch.sh apply <patch_file>
 # or apply all patches:
 ./patch.sh apply
+```
+
+To reset all patches, use:
+```bash
+./patch.sh reset
 ```
 
 You can rebuild the fuzzers with the following command. It uses the source code (for the fuzzers) in ./projects/libxml2 directory:
