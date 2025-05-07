@@ -104,7 +104,7 @@ def get_file_pairs(seed_root, no_seed_root, suffix=".c.html"):
     return file_paths_with_seed, file_paths_no_seed
 
 seed_root = "coverage/coverageXmlSeed/linux/src"
-no_seed_root = "coverage/coverageXmlNoSeed2/linux/src"
+no_seed_root = "coverage/coverageXmlNoSeed/linux/src"
 
 file_paths_with_seed, file_paths_no_seed = get_file_pairs(seed_root, no_seed_root)
 
