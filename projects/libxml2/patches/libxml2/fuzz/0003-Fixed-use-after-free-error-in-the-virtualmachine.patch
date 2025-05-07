@@ -1,0 +1,75 @@
+From b9cd5e39b1d7781f1e06c14d9c823025c2d6e99a Mon Sep 17 00:00:00 2001
+From: Patrick-Pataky <patrick.pataky@epfl.ch>
+Date: Wed, 7 May 2025 12:23:15 +0200
+Subject: [PATCH 3/3] Fixed use-after-free error in the virtualmachine
+
+---
+ fuzz/catalog.c | 31 ++++++++++++++++++++++++++-----
+ 1 file changed, 26 insertions(+), 5 deletions(-)
+
+diff --git a/fuzz/catalog.c b/fuzz/catalog.c
+index e68550be..63354938 100644
+--- a/fuzz/catalog.c
++++ b/fuzz/catalog.c
+@@ -199,6 +199,24 @@ getCatalog(int offset) {
+     return catalog;
+ }
+ 
++// Checks if the catalog is still referenced in
++// any register before freeing.
++static void
++dropCatalog(xmlCatalogPtr catalog) {
++    int i;
++
++    if (catalog == NULL)
++        return;
++
++    for (i = 0; i < MAX_CAT_REGS; i++) {
++        if (vars->catalogs[i] == catalog) {
++            return;
++        }
++    }
++
++    xmlFreeCatalog(catalog);
++}
++
+ static void
+ setCatalog(int offset, xmlCatalogPtr catalog) {
+     xmlCatalogPtr *catalogs = vars->catalogs;
+@@ -206,8 +224,8 @@ setCatalog(int offset, xmlCatalogPtr catalog) {
+     xmlCatalogPtr oldCatalog = catalogs[idx];
+ 
+     catalogs[idx] = catalog;
+-    if (oldCatalog)
+-        xmlFreeCatalog(oldCatalog);
++
++    dropCatalog(oldCatalog);
+ }
+ 
+ static void
+@@ -298,7 +316,7 @@ LLVMFuzzerTestOneInput(const char *data, size_t size) {
+      */
+     while (xmlFuzzBytesRemaining() && vars->opCount++ < MAX_OPS) {
+         size_t readSize;
+-        int op = xmlFuzzReadInt(1) % OP_MAX;
++        int op = xmlFuzzReadInt(1);
+         int oomReport = -1; /* -1 means unknown */
+         int ioReport = 0;
+ 
+@@ -381,8 +399,11 @@ LLVMFuzzerTestOneInput(const char *data, size_t size) {
+             xmlFree(vars->strings[i]);
+ 
+     for (i = 0; i < MAX_CAT_REGS; i++)
+-        if (vars->catalogs[i])
+-            xmlFreeCatalog(vars->catalogs[i]);
++        if (vars->catalogs[i]) {
++            xmlCatalogPtr cat = vars->catalogs[i];
++            vars->catalogs[i] = NULL;
++            dropCatalog(cat);
++        }
+ 
+     xmlFuzzInjectFailure(0);
+     xmlCatalogCleanup();
+-- 
+2.49.0
+
