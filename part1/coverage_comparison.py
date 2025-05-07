@@ -103,14 +103,12 @@ def get_file_pairs(seed_root, no_seed_root, suffix=".c.html"):
 
     return file_paths_with_seed, file_paths_no_seed
 
-# Example usage
 seed_root = "coverage/coverageXmlSeed/linux/src"
 no_seed_root = "coverage/coverageXmlNoSeed2/linux/src"
 
 file_paths_with_seed, file_paths_no_seed = get_file_pairs(seed_root, no_seed_root)
 
-# Now use this list with your comparison function
-output_file = "coverage_comparison_results.txt"
+output_file = "coverage/coverage_comparison_results.txt"
 compare_reports_with_multiple_files(file_paths_with_seed, file_paths_no_seed, output_file)
 
 print(f"\n✅ Done! Comparison results saved to: {output_file}")
