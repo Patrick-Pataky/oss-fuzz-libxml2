@@ -1,37 +1,3 @@
-Comparing: coverage/coverageXmlSeed/linux/src/encoding.c.html and coverage/coverageXmlNoSeed2/linux/src/encoding.c.html
-------------------------------------------------------------
-Uncovered lines only with seed:
-  Line 1276
-  Line 1277
-  Line 1278
-  Line 1283
-  Line 1284
-  Line 1297
-
-Uncovered lines only without seed:
-  Line 1593
-  Line 2398
-  Line 2400
-  Line 2401
-  Line 2402
-  Line 2403
-  Line 2404
-  Line 2405
-  Line 2406
-  Line 2407
-  Line 2569
-  Line 2595
-  Line 2597
-  Line 2598
-  Line 2599
-  Line 2600
-  Line 2601
-  Line 2602
-  Line 2603
-  Line 2604
-
-============================================================
-
 Comparing: coverage/coverageXmlSeed/linux/src/valid.c.html and coverage/coverageXmlNoSeed2/linux/src/valid.c.html
 ------------------------------------------------------------
 Uncovered lines only with seed:
@@ -73,6 +39,268 @@ Uncovered lines only without seed:
 
 ============================================================
 
+Comparing: coverage/coverageXmlSeed/linux/src/uri.c.html and coverage/coverageXmlNoSeed2/linux/src/uri.c.html
+------------------------------------------------------------
+Uncovered lines only with seed:
+  None
+
+Uncovered lines only without seed:
+  Line 97
+  Line 98
+  Line 99
+  Line 100
+  Line 406
+  Line 440
+  Line 441
+  Line 442
+  Line 482
+  Line 483
+  Line 498
+  Line 499
+  Line 557
+  Line 872
+  Line 1130
+  Line 1204
+  Line 1205
+  Line 1206
+  Line 1212
+  Line 1213
+  Line 1214
+  Line 1217
+  Line 1225
+  Line 1231
+  Line 1232
+  Line 1287
+  Line 1312
+  Line 1338
+  Line 1339
+  Line 1340
+  Line 1341
+  Line 1342
+  Line 1371
+  Line 1377
+  Line 1378
+  Line 1379
+  Line 1380
+  Line 1381
+  Line 1382
+  Line 1383
+  Line 1384
+  Line 1385
+  Line 1386
+  Line 1394
+  Line 1395
+  Line 1404
+  Line 1405
+  Line 1406
+  Line 1547
+  Line 1548
+  Line 1549
+  Line 1550
+  Line 1940
+  Line 1957
+  Line 2121
+  Line 2124
+  Line 2125
+  Line 2126
+  Line 2127
+  Line 2128
+  Line 2129
+  Line 2130
+  Line 2131
+  Line 2132
+  Line 2133
+  Line 2152
+  Line 2153
+  Line 2154
+  Line 2155
+  Line 2156
+  Line 2158
+  Line 2164
+  Line 2165
+  Line 2166
+  Line 2168
+  Line 2174
+  Line 2175
+  Line 2176
+  Line 2177
+  Line 2178
+  Line 2180
+  Line 2181
+  Line 2182
+  Line 2183
+  Line 2198
+  Line 2199
+  Line 2200
+  Line 2202
+  Line 2203
+  Line 2204
+  Line 2227
+  Line 2233
+  Line 2234
+  Line 2235
+  Line 2237
+  Line 2282
+  Line 2283
+  Line 2284
+  Line 2285
+  Line 2286
+  Line 2294
+  Line 2295
+  Line 2296
+  Line 2298
+  Line 2299
+  Line 2352
+
+============================================================
+
+Comparing: coverage/coverageXmlSeed/linux/src/SAX2.c.html and coverage/coverageXmlNoSeed2/linux/src/SAX2.c.html
+------------------------------------------------------------
+Uncovered lines only with seed:
+  None
+
+Uncovered lines only without seed:
+  Line 76
+  Line 77
+  Line 78
+  Line 79
+  Line 746
+  Line 747
+  Line 748
+  Line 749
+  Line 750
+  Line 751
+
+============================================================
+
+Comparing: coverage/coverageXmlSeed/linux/src/xmlIO.c.html and coverage/coverageXmlNoSeed2/linux/src/xmlIO.c.html
+------------------------------------------------------------
+Uncovered lines only with seed:
+  None
+
+Uncovered lines only without seed:
+  Line 2249
+
+============================================================
+
+Comparing: coverage/coverageXmlSeed/linux/src/error.c.html and coverage/coverageXmlNoSeed2/linux/src/error.c.html
+------------------------------------------------------------
+Uncovered lines only with seed:
+  Line 793
+  Line 794
+  Line 795
+  Line 796
+  Line 797
+  Line 798
+  Line 799
+  Line 800
+  Line 801
+  Line 802
+  Line 803
+  Line 804
+
+Uncovered lines only without seed:
+  None
+
+============================================================
+
+Comparing: coverage/coverageXmlSeed/linux/src/hash.c.html and coverage/coverageXmlNoSeed2/linux/src/hash.c.html
+------------------------------------------------------------
+Uncovered lines only with seed:
+  None
+
+Uncovered lines only without seed:
+  Line 1240
+  Line 1241
+  Line 1242
+  Line 1294
+  Line 1295
+
+============================================================
+
+Comparing: coverage/coverageXmlSeed/linux/src/tree.c.html and coverage/coverageXmlNoSeed2/linux/src/tree.c.html
+------------------------------------------------------------
+Uncovered lines only with seed:
+  Line 1351
+
+Uncovered lines only without seed:
+  Line 419
+  Line 1889
+  Line 1890
+  Line 1891
+  Line 9231
+
+============================================================
+
+Comparing: coverage/coverageXmlSeed/linux/src/xmlsave.c.html and coverage/coverageXmlNoSeed2/linux/src/xmlsave.c.html
+------------------------------------------------------------
+Uncovered lines only with seed:
+  Line 97
+  Line 98
+  Line 99
+  Line 100
+  Line 101
+  Line 106
+  Line 107
+  Line 108
+  Line 109
+  Line 110
+  Line 111
+  Line 113
+  Line 1501
+
+Uncovered lines only without seed:
+  Line 214
+  Line 1870
+  Line 1871
+  Line 1872
+
+============================================================
+
+Comparing: coverage/coverageXmlSeed/linux/src/encoding.c.html and coverage/coverageXmlNoSeed2/linux/src/encoding.c.html
+------------------------------------------------------------
+Uncovered lines only with seed:
+  Line 1276
+  Line 1277
+  Line 1278
+  Line 1283
+  Line 1284
+  Line 1297
+
+Uncovered lines only without seed:
+  Line 1593
+  Line 2398
+  Line 2400
+  Line 2401
+  Line 2402
+  Line 2403
+  Line 2404
+  Line 2405
+  Line 2406
+  Line 2407
+  Line 2569
+  Line 2595
+  Line 2597
+  Line 2598
+  Line 2599
+  Line 2600
+  Line 2601
+  Line 2602
+  Line 2603
+  Line 2604
+
+============================================================
+
+Comparing: coverage/coverageXmlSeed/linux/src/list.c.html and coverage/coverageXmlNoSeed2/linux/src/list.c.html
+------------------------------------------------------------
+Uncovered lines only with seed:
+  None
+
+Uncovered lines only without seed:
+  Line 309
+
+============================================================
+
 Comparing: coverage/coverageXmlSeed/linux/src/xmlstring.c.html and coverage/coverageXmlNoSeed2/linux/src/xmlstring.c.html
 ------------------------------------------------------------
 Uncovered lines only with seed:
@@ -98,51 +326,6 @@ Uncovered lines only without seed:
   Line 706
   Line 707
   Line 708
-
-============================================================
-
-Comparing: coverage/coverageXmlSeed/linux/src/tree.c.html and coverage/coverageXmlNoSeed2/linux/src/tree.c.html
-------------------------------------------------------------
-Uncovered lines only with seed:
-  Line 1351
-
-Uncovered lines only without seed:
-  Line 419
-  Line 1889
-  Line 1890
-  Line 1891
-  Line 9231
-
-============================================================
-
-Comparing: coverage/coverageXmlSeed/linux/src/error.c.html and coverage/coverageXmlNoSeed2/linux/src/error.c.html
-------------------------------------------------------------
-Uncovered lines only with seed:
-  Line 793
-  Line 794
-  Line 795
-  Line 796
-  Line 797
-  Line 798
-  Line 799
-  Line 800
-  Line 801
-  Line 802
-  Line 803
-  Line 804
-
-Uncovered lines only without seed:
-  None
-
-============================================================
-
-Comparing: coverage/coverageXmlSeed/linux/src/xmlIO.c.html and coverage/coverageXmlNoSeed2/linux/src/xmlIO.c.html
-------------------------------------------------------------
-Uncovered lines only with seed:
-  None
-
-Uncovered lines only without seed:
-  Line 2249
 
 ============================================================
 
@@ -270,189 +453,6 @@ Uncovered lines only without seed:
   Line 8002
   Line 8864
   Line 9510
-
-============================================================
-
-Comparing: coverage/coverageXmlSeed/linux/src/hash.c.html and coverage/coverageXmlNoSeed2/linux/src/hash.c.html
-------------------------------------------------------------
-Uncovered lines only with seed:
-  None
-
-Uncovered lines only without seed:
-  Line 1240
-  Line 1241
-  Line 1242
-  Line 1294
-  Line 1295
-
-============================================================
-
-Comparing: coverage/coverageXmlSeed/linux/src/list.c.html and coverage/coverageXmlNoSeed2/linux/src/list.c.html
-------------------------------------------------------------
-Uncovered lines only with seed:
-  None
-
-Uncovered lines only without seed:
-  Line 309
-
-============================================================
-
-Comparing: coverage/coverageXmlSeed/linux/src/xmlsave.c.html and coverage/coverageXmlNoSeed2/linux/src/xmlsave.c.html
-------------------------------------------------------------
-Uncovered lines only with seed:
-  Line 97
-  Line 98
-  Line 99
-  Line 100
-  Line 101
-  Line 106
-  Line 107
-  Line 108
-  Line 109
-  Line 110
-  Line 111
-  Line 113
-  Line 1501
-
-Uncovered lines only without seed:
-  Line 214
-  Line 1870
-  Line 1871
-  Line 1872
-
-============================================================
-
-Comparing: coverage/coverageXmlSeed/linux/src/SAX2.c.html and coverage/coverageXmlNoSeed2/linux/src/SAX2.c.html
-------------------------------------------------------------
-Uncovered lines only with seed:
-  None
-
-Uncovered lines only without seed:
-  Line 76
-  Line 77
-  Line 78
-  Line 79
-  Line 746
-  Line 747
-  Line 748
-  Line 749
-  Line 750
-  Line 751
-
-============================================================
-
-Comparing: coverage/coverageXmlSeed/linux/src/uri.c.html and coverage/coverageXmlNoSeed2/linux/src/uri.c.html
-------------------------------------------------------------
-Uncovered lines only with seed:
-  None
-
-Uncovered lines only without seed:
-  Line 97
-  Line 98
-  Line 99
-  Line 100
-  Line 406
-  Line 440
-  Line 441
-  Line 442
-  Line 482
-  Line 483
-  Line 498
-  Line 499
-  Line 557
-  Line 872
-  Line 1130
-  Line 1204
-  Line 1205
-  Line 1206
-  Line 1212
-  Line 1213
-  Line 1214
-  Line 1217
-  Line 1225
-  Line 1231
-  Line 1232
-  Line 1287
-  Line 1312
-  Line 1338
-  Line 1339
-  Line 1340
-  Line 1341
-  Line 1342
-  Line 1371
-  Line 1377
-  Line 1378
-  Line 1379
-  Line 1380
-  Line 1381
-  Line 1382
-  Line 1383
-  Line 1384
-  Line 1385
-  Line 1386
-  Line 1394
-  Line 1395
-  Line 1404
-  Line 1405
-  Line 1406
-  Line 1547
-  Line 1548
-  Line 1549
-  Line 1550
-  Line 1940
-  Line 1957
-  Line 2121
-  Line 2124
-  Line 2125
-  Line 2126
-  Line 2127
-  Line 2128
-  Line 2129
-  Line 2130
-  Line 2131
-  Line 2132
-  Line 2133
-  Line 2152
-  Line 2153
-  Line 2154
-  Line 2155
-  Line 2156
-  Line 2158
-  Line 2164
-  Line 2165
-  Line 2166
-  Line 2168
-  Line 2174
-  Line 2175
-  Line 2176
-  Line 2177
-  Line 2178
-  Line 2180
-  Line 2181
-  Line 2182
-  Line 2183
-  Line 2198
-  Line 2199
-  Line 2200
-  Line 2202
-  Line 2203
-  Line 2204
-  Line 2227
-  Line 2233
-  Line 2234
-  Line 2235
-  Line 2237
-  Line 2282
-  Line 2283
-  Line 2284
-  Line 2285
-  Line 2286
-  Line 2294
-  Line 2295
-  Line 2296
-  Line 2298
-  Line 2299
-  Line 2352
 
 ============================================================
 
