@@ -1,4 +1,4 @@
-From a3ee894d3c10b3f4919a44cd76e2f883a64c5f20 Mon Sep 17 00:00:00 2001
+From 95aa483883dc1a9d27e46fd23c298a992f7e65e3 Mon Sep 17 00:00:00 2001
 From: Patrick-Pataky <patrick.pataky@epfl.ch>
 Date: Mon, 5 May 2025 13:51:43 +0200
 Subject: [PATCH] [catalog]: Adding new catalog's fuzzer
@@ -10,18 +10,65 @@ Subject: [PATCH] [catalog]: Adding new catalog's fuzzer
 [catalog]: Fixed use-after-free error in the virtualmachine
 
 [catalog]: Added global resolve methods to the virtualmachine
+
+[catalog]: Added complex test testXMLCatalogInternal1
+
+[catalog]: Fixed uncaught NULL check bug
 ---
- fuzz/catalog.c         | 476 +++++++++++++++++++++++++++++++++++++++++
+ catalog.c              |  28 ++-
+ fuzz/catalog.c         | 521 +++++++++++++++++++++++++++++++++++++++++
  fuzz/oss-fuzz-build.sh |   4 +-
- 2 files changed, 478 insertions(+), 2 deletions(-)
+ 3 files changed, 539 insertions(+), 14 deletions(-)
  create mode 100644 fuzz/catalog.c
 
+diff --git a/catalog.c b/catalog.c
+index dc22e277..63c30163 100644
+--- a/catalog.c
++++ b/catalog.c
+@@ -1008,21 +1008,25 @@ xmlCatalogNormalizePublic(const xmlChar *pubID)
+         return(NULL);
+ 
+     ret = xmlStrdup(pubID);
+-    q = ret;
+-    white = 0;
+-    for (p = pubID;*p != 0;p++) {
+-        if (xmlIsBlank_ch(*p)) {
+-            if (q != ret)
+-                white = 1;
+-        } else {
+-            if (white) {
+-                *(q++) = 0x20;
+-                white = 0;
++
++    if (ret != NULL) {
++        q = ret;
++        white = 0;
++        for (p = pubID;*p != 0;p++) {
++            if (xmlIsBlank_ch(*p)) {
++                if (q != ret)
++                    white = 1;
++            } else {
++                if (white) {
++                    *(q++) = 0x20;
++                    white = 0;
++                }
++                *(q++) = *p;
+             }
+-            *(q++) = *p;
+         }
++        *q = 0;
+     }
+-    *q = 0;
++
+     return(ret);
+ }
+ 
 diff --git a/fuzz/catalog.c b/fuzz/catalog.c
 new file mode 100644
-index 00000000..eed001da
+index 00000000..b16864af
 --- /dev/null
 +++ b/fuzz/catalog.c
-@@ -0,0 +1,476 @@
+@@ -0,0 +1,521 @@
 +/*
 + * catalog.c: a libFuzzer target to test the XML catalog API.
 + *
@@ -68,6 +115,8 @@ index 00000000..eed001da
 +    OP_CATALOG_GLOBAL_RESOLVE_SYSTEM,
 +    OP_CATALOG_GLOBAL_RESOLVE_PUBLIC,
 +    OP_CATALOG_GLOBAL_RESOLVE_URI,
++
++    OP_TEST_XML_CATALOG_1,
 +
 +    OP_MAX
 +} opType;
@@ -457,6 +506,49 @@ index 00000000..eed001da
 +                if (resolved != NULL)
 +                    oomReport = 0;
 +                moveStr(0, resolved);
++                endOp();
++                break;
++            }
++
++            case OP_TEST_XML_CATALOG_1: {
++                startOp("testXMLCatalogInternal1");
++
++                xmlCatalogPtr catalog = xmlNewCatalog(0);  // XML catalog
++                incCatalogIdx();
++                setCatalog(0, catalog);
++
++                if (catalog != NULL) {
++                    // Add a variety of entry types to test different code paths
++                    xmlACatalogAdd(catalog, BAD_CAST "system",
++                                getStr(0), getStr(1));
++                    xmlACatalogAdd(catalog, BAD_CAST "public",
++                                getStr(2), getStr(3));
++                    xmlACatalogAdd(catalog, BAD_CAST "rewriteSystem",
++                                getStr(4), getStr(5));
++                    xmlACatalogAdd(catalog, BAD_CAST "delegatePublic",
++                                getStr(6), getStr(7));
++
++                    incStrIdx();
++                    xmlChar *resolved = xmlACatalogResolve(catalog, getStr(2), getStr(0));
++                    if (resolved != NULL)
++                        oomReport = 0;
++                    moveStr(0, resolved);
++
++                    // Test recursion paths
++                    xmlCatalogPtr nestedCatalog = xmlNewCatalog(0);
++                    if (nestedCatalog != NULL) {
++                        xmlACatalogAdd(catalog, BAD_CAST "nextCatalog",
++                                    BAD_CAST "nested", BAD_CAST "nested");
++
++                        incIntIdx();
++                        xmlChar *result = xmlACatalogResolve(catalog, getStr(6), getStr(4));
++                        setInt(0, result != NULL ? 1 : 0);
++                        xmlFree(result);
++
++                        xmlFreeCatalog(nestedCatalog);
++                    }
++                }
++
 +                endOp();
 +                break;
 +            }
