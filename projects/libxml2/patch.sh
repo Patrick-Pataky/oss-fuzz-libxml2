@@ -98,16 +98,31 @@ function cmd_apply() {
   echo "${GREEN}All patches applied.${RESET}"
 }
 
+function cmd_reset() {
+    pushd "${SUBMODULE_PATH}" > /dev/null
+
+    echo "${BLUE}Resetting all changes...${RESET}"
+    git reset --hard 1039cd53
+    git clean -fd
+
+    popd > /dev/null
+    echo "${GREEN}All changes reset.${RESET}"
+}
+
 # Main dispatcher
 if [[ $# -lt 1 || $# -gt 2 ]]; then usage; fi
 
 case "$1" in
-  generate)
-    cmd_generate
+    generate)
+        cmd_generate
     ;;
-  apply)
-    if [[ $# -gt 2 ]]; then usage; fi
-    cmd_apply "${2:-}"
+    apply)
+        if [[ $# -gt 2 ]]; then usage; fi
+        cmd_apply "${2:-}"
     ;;
-  *) usage ;;
+    reset)
+        cmd_reset
+    ;;
+    *) usage
+    ;;
 esac
