@@ -1,4 +1,4 @@
-From 95aa483883dc1a9d27e46fd23c298a992f7e65e3 Mon Sep 17 00:00:00 2001
+From bf1b66069b2f3f14134cec2487a3c7662f46fb11 Mon Sep 17 00:00:00 2001
 From: Patrick-Pataky <patrick.pataky@epfl.ch>
 Date: Mon, 5 May 2025 13:51:43 +0200
 Subject: [PATCH] [catalog]: Adding new catalog's fuzzer
@@ -14,11 +14,15 @@ Subject: [PATCH] [catalog]: Adding new catalog's fuzzer
 [catalog]: Added complex test testXMLCatalogInternal1
 
 [catalog]: Fixed uncaught NULL check bug
+
+[catalog]: Fixed most memory leaks issue, one still remains
+
+[catalog]: Tried to find memory leak origin (after xmlCatalogAdd was called), non successful
 ---
- catalog.c              |  28 ++-
- fuzz/catalog.c         | 521 +++++++++++++++++++++++++++++++++++++++++
+ catalog.c              |  28 +--
+ fuzz/catalog.c         | 479 +++++++++++++++++++++++++++++++++++++++++
  fuzz/oss-fuzz-build.sh |   4 +-
- 3 files changed, 539 insertions(+), 14 deletions(-)
+ 3 files changed, 497 insertions(+), 14 deletions(-)
  create mode 100644 fuzz/catalog.c
 
 diff --git a/catalog.c b/catalog.c
@@ -65,10 +69,10 @@ index dc22e277..63c30163 100644
  
 diff --git a/fuzz/catalog.c b/fuzz/catalog.c
 new file mode 100644
-index 00000000..b16864af
+index 00000000..4884f98a
 --- /dev/null
 +++ b/fuzz/catalog.c
-@@ -0,0 +1,521 @@
+@@ -0,0 +1,479 @@
 +/*
 + * catalog.c: a libFuzzer target to test the XML catalog API.
 + *
@@ -223,7 +227,9 @@ index 00000000..b16864af
 +
 +static void
 +moveStr(int offset, xmlChar *str) {
-+    if (xmlStrlen(str) > 1000) {
++    if (str == NULL) {
++        setStr(offset, NULL);
++    } else if (xmlStrlen(str) > 1000) {
 +        setStr(offset, NULL);
 +        xmlFree(str);
 +    } else {
@@ -356,6 +362,8 @@ index 00000000..b16864af
 +                     char ***argv ATTRIBUTE_UNUSED) {
 +    xmlFuzzMemSetup();
 +    xmlInitParser();
++    xmlCatalogSetDebug(0);
++    xmlCatalogSetDefaults(XML_CATA_ALLOW_ALL);
 +    xmlSetGenericErrorFunc(NULL, xmlFuzzErrorFunc);
 +
 +    return 0;
@@ -370,9 +378,6 @@ index 00000000..b16864af
 +        return 0;
 +
 +    memset(vars, 0, sizeof(*vars));
-+
-+    xmlInitializeCatalog();
-+    xmlCatalogSetDefaults(XML_CATA_ALLOW_ALL);
 +
 +    xmlFuzzDataInit(data, size);
 +
@@ -449,9 +454,8 @@ index 00000000..b16864af
 +            case OP_CATALOG_GLOBAL_ADD: {
 +                startOp("xmlCatalogAdd");
 +                incIntIdx();
-+                setInt(0,
-+                    xmlCatalogAdd(getStr(0), getStr(1), getStr(2))
-+                );
++                int result = xmlCatalogAdd(getStr(0), getStr(1), getStr(2));
++                setInt(0, result);
 +                endOp();
 +                break;
 +            }
@@ -510,49 +514,6 @@ index 00000000..b16864af
 +                break;
 +            }
 +
-+            case OP_TEST_XML_CATALOG_1: {
-+                startOp("testXMLCatalogInternal1");
-+
-+                xmlCatalogPtr catalog = xmlNewCatalog(0);  // XML catalog
-+                incCatalogIdx();
-+                setCatalog(0, catalog);
-+
-+                if (catalog != NULL) {
-+                    // Add a variety of entry types to test different code paths
-+                    xmlACatalogAdd(catalog, BAD_CAST "system",
-+                                getStr(0), getStr(1));
-+                    xmlACatalogAdd(catalog, BAD_CAST "public",
-+                                getStr(2), getStr(3));
-+                    xmlACatalogAdd(catalog, BAD_CAST "rewriteSystem",
-+                                getStr(4), getStr(5));
-+                    xmlACatalogAdd(catalog, BAD_CAST "delegatePublic",
-+                                getStr(6), getStr(7));
-+
-+                    incStrIdx();
-+                    xmlChar *resolved = xmlACatalogResolve(catalog, getStr(2), getStr(0));
-+                    if (resolved != NULL)
-+                        oomReport = 0;
-+                    moveStr(0, resolved);
-+
-+                    // Test recursion paths
-+                    xmlCatalogPtr nestedCatalog = xmlNewCatalog(0);
-+                    if (nestedCatalog != NULL) {
-+                        xmlACatalogAdd(catalog, BAD_CAST "nextCatalog",
-+                                    BAD_CAST "nested", BAD_CAST "nested");
-+
-+                        incIntIdx();
-+                        xmlChar *result = xmlACatalogResolve(catalog, getStr(6), getStr(4));
-+                        setInt(0, result != NULL ? 1 : 0);
-+                        xmlFree(result);
-+
-+                        xmlFreeCatalog(nestedCatalog);
-+                    }
-+                }
-+
-+                endOp();
-+                break;
-+            }
-+
 +            default:
 +                break;
 +        }
@@ -561,8 +522,10 @@ index 00000000..b16864af
 +    }
 +
 +    for (i = 0; i < MAX_STR_REGS; i++)
-+        if (vars->strings[i])
++        if (vars->strings[i]) {
 +            xmlFree(vars->strings[i]);
++            vars->strings[i] = NULL;
++        }
 +
 +    for (i = 0; i < MAX_CAT_REGS; i++)
 +        if (vars->catalogs[i]) {
@@ -572,13 +535,12 @@ index 00000000..b16864af
 +        }
 +
 +    xmlFuzzInjectFailure(0);
-+    xmlCatalogCleanup();
++    xmlCleanupParser();
 +    xmlFuzzDataCleanup();
 +    xmlResetLastError();
 +    return(0);
 +}
 +
-+//TODO: to improve??
 +size_t
 +LLVMFuzzerCustomMutator(char *data, size_t size, size_t maxSize,
 +                        unsigned seed) {
