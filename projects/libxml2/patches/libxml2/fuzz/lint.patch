@@ -1,0 +1,229 @@
+From 7960f3bc0a3b13b3a036f99c01455207b2cd6e04 Mon Sep 17 00:00:00 2001
+From: Patrick-Pataky <patrick.pataky@epfl.ch>
+Date: Sun, 11 May 2025 17:14:47 +0200
+Subject: [PATCH] [lint]: Adding basic seeds for DTD
+
+[lint]: Adding basic seeds for DTD (Makefile part)
+
+[lint]: Fixed Makefile (spaces instead of tabs)
+
+[lint]: The only seed for valid.c in my custom one
+---
+ fuzz/Makefile.am                              |  4 ++--
+ fuzz/static_seed/valid/any_empty.xml          | 12 ++++++++++++
+ fuzz/static_seed/valid/basic.xml              | 12 ++++++++++++
+ .../valid/choice_content_model.xml            | 11 +++++++++++
+ fuzz/static_seed/valid/deep_nesting.xml       | 18 ++++++++++++++++++
+ fuzz/static_seed/valid/document.dtd           |  4 ++++
+ .../static_seed/valid/dtd_external_subset.xml |  8 ++++++++
+ fuzz/static_seed/valid/edge1.xml              | 19 +++++++++++++++++++
+ fuzz/static_seed/valid/nesting.xml            | 16 ++++++++++++++++
+ .../static_seed/valid/optional_repeatable.xml | 18 ++++++++++++++++++
+ 10 files changed, 120 insertions(+), 2 deletions(-)
+ create mode 100644 fuzz/static_seed/valid/any_empty.xml
+ create mode 100644 fuzz/static_seed/valid/basic.xml
+ create mode 100644 fuzz/static_seed/valid/choice_content_model.xml
+ create mode 100644 fuzz/static_seed/valid/deep_nesting.xml
+ create mode 100644 fuzz/static_seed/valid/document.dtd
+ create mode 100644 fuzz/static_seed/valid/dtd_external_subset.xml
+ create mode 100644 fuzz/static_seed/valid/edge1.xml
+ create mode 100644 fuzz/static_seed/valid/nesting.xml
+ create mode 100644 fuzz/static_seed/valid/optional_repeatable.xml
+
+diff --git a/fuzz/Makefile.am b/fuzz/Makefile.am
+index 373aa26f..3c7645e1 100644
+--- a/fuzz/Makefile.am
++++ b/fuzz/Makefile.am
+@@ -4,7 +4,7 @@ EXTRA_PROGRAMS = genSeed \
+ 		 xml xpath
+ check_PROGRAMS = testFuzzer
+ EXTRA_DIST = html.dict regexp.dict schema.dict xml.dict xpath.dict \
+-	     static_seed/uri static_seed/regexp fuzz.h
++	     static_seed/uri static_seed/regexp static_seed/valid fuzz.h
+ CLEANFILES = $(EXTRA_PROGRAMS)
+ AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include
+ DEPENDENCIES = $(top_builddir)/libxml2.la
+@@ -68,7 +68,7 @@ fuzz-xml: xml$(EXEEXT) seed/xml.stamp
+ 
+ seed/valid.stamp: genSeed$(EXEEXT)
+ 	@mkdir -p seed/valid
+-	./genSeed$(EXEEXT) valid $(XML_SEED_CORPUS_SRC)
++	cp -r $(srcdir)/static_seed/valid seed
+ 	@touch seed/valid.stamp
+ 
+ valid_SOURCES = valid.c fuzz.c
+diff --git a/fuzz/static_seed/valid/any_empty.xml b/fuzz/static_seed/valid/any_empty.xml
+new file mode 100644
+index 00000000..055d6c9d
+--- /dev/null
++++ b/fuzz/static_seed/valid/any_empty.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0"?>
++<!DOCTYPE container [
++<!ELEMENT container (empty-elem|any-elem)*>
++<!ELEMENT empty-elem EMPTY>
++<!ELEMENT any-elem ANY>
++]>
++<container>
++  <empty-elem/>
++  <any-elem>
++    <custom>This can be anything</custom>
++  </any-elem>
++</container>
+diff --git a/fuzz/static_seed/valid/basic.xml b/fuzz/static_seed/valid/basic.xml
+new file mode 100644
+index 00000000..44b8ef64
+--- /dev/null
++++ b/fuzz/static_seed/valid/basic.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0"?>
++<!DOCTYPE root [
++<!ELEMENT root (child1, child2, child3)>
++<!ELEMENT child1 (#PCDATA)>
++<!ELEMENT child2 (#PCDATA)>
++<!ELEMENT child3 (#PCDATA)>
++]>
++<root>
++  <child1>Text</child1>
++  <child2>Text</child2>
++  <child3>Text</child3>
++</root>
+diff --git a/fuzz/static_seed/valid/choice_content_model.xml b/fuzz/static_seed/valid/choice_content_model.xml
+new file mode 100644
+index 00000000..3417b49e
+--- /dev/null
++++ b/fuzz/static_seed/valid/choice_content_model.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0"?>
++<!DOCTYPE message [
++<!ELEMENT message (header, (text|binary))>
++<!ELEMENT header (#PCDATA)>
++<!ELEMENT text (#PCDATA)>
++<!ELEMENT binary EMPTY>
++]>
++<message>
++  <header>Message Header</header>
++  <text>This is a text message</text>
++</message>
+diff --git a/fuzz/static_seed/valid/deep_nesting.xml b/fuzz/static_seed/valid/deep_nesting.xml
+new file mode 100644
+index 00000000..c169673b
+--- /dev/null
++++ b/fuzz/static_seed/valid/deep_nesting.xml
+@@ -0,0 +1,18 @@
++<?xml version="1.0"?>
++<!DOCTYPE complex [
++<!ELEMENT complex (level1)>
++<!ELEMENT level1 (level2+)>
++<!ELEMENT level2 (level3*)>
++<!ELEMENT level3 (level4?)>
++<!ELEMENT level4 (#PCDATA|level5)*>
++<!ELEMENT level5 (#PCDATA)>
++]>
++<complex>
++  <level1>
++    <level2>
++      <level3>
++        <level4>Text<level5>Nested text</level5></level4>
++      </level3>
++    </level2>
++  </level1>
++</complex>
+diff --git a/fuzz/static_seed/valid/document.dtd b/fuzz/static_seed/valid/document.dtd
+new file mode 100644
+index 00000000..4750537f
+--- /dev/null
++++ b/fuzz/static_seed/valid/document.dtd
+@@ -0,0 +1,4 @@
++<!ELEMENT document (section+)>
++<!ELEMENT section (title, para+)>
++<!ELEMENT title (#PCDATA)>
++<!ELEMENT para (#PCDATA)>
+diff --git a/fuzz/static_seed/valid/dtd_external_subset.xml b/fuzz/static_seed/valid/dtd_external_subset.xml
+new file mode 100644
+index 00000000..98e1076d
+--- /dev/null
++++ b/fuzz/static_seed/valid/dtd_external_subset.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0"?>
++<!DOCTYPE document SYSTEM "document.dtd">
++<document>
++  <section>
++    <title>Testing External Subset</title>
++    <para>This document references an external DTD</para>
++  </section>
++</document>
+diff --git a/fuzz/static_seed/valid/edge1.xml b/fuzz/static_seed/valid/edge1.xml
+new file mode 100644
+index 00000000..278f5033
+--- /dev/null
++++ b/fuzz/static_seed/valid/edge1.xml
+@@ -0,0 +1,19 @@
++<?xml version="1.0"?>
++<!DOCTYPE boundary [
++<!ELEMENT boundary ((a|b|c|d|e|f|g|h|i|j)+)>
++<!ELEMENT a (#PCDATA)>
++<!ELEMENT b (#PCDATA)>
++<!ELEMENT c (#PCDATA)>
++<!ELEMENT d (#PCDATA)>
++<!ELEMENT e (#PCDATA)>
++<!ELEMENT f (#PCDATA)>
++<!ELEMENT g (#PCDATA)>
++<!ELEMENT h (#PCDATA)>
++<!ELEMENT i (#PCDATA)>
++<!ELEMENT j (#PCDATA)>
++]>
++<boundary>
++  <a>Text</a>
++  <b>Text</b>
++  <c>Text</c>
++</boundary>
+diff --git a/fuzz/static_seed/valid/nesting.xml b/fuzz/static_seed/valid/nesting.xml
+new file mode 100644
+index 00000000..0c6ff6cc
+--- /dev/null
++++ b/fuzz/static_seed/valid/nesting.xml
+@@ -0,0 +1,16 @@
++<?xml version="1.0"?>
++<!DOCTYPE document [
++<!ELEMENT document (section+)>
++<!ELEMENT section (title, paragraph+)>
++<!ELEMENT title (#PCDATA)>
++<!ELEMENT paragraph (#PCDATA|emphasis|strong|link)*>
++<!ELEMENT emphasis (#PCDATA)>
++<!ELEMENT strong (#PCDATA)>
++<!ELEMENT link (#PCDATA)>
++]>
++<document>
++  <section>
++    <title>Section Title</title>
++    <paragraph>Text with <emphasis>emphasized</emphasis> and <strong>strong</strong> parts.</paragraph>
++  </section>
++</document>
+diff --git a/fuzz/static_seed/valid/optional_repeatable.xml b/fuzz/static_seed/valid/optional_repeatable.xml
+new file mode 100644
+index 00000000..82a7908c
+--- /dev/null
++++ b/fuzz/static_seed/valid/optional_repeatable.xml
+@@ -0,0 +1,18 @@
++<?xml version="1.0"?>
++<!DOCTYPE form [
++<!ELEMENT form (field+, button?, section*)>
++<!ELEMENT field (#PCDATA)>
++<!ELEMENT button (#PCDATA)>
++<!ELEMENT section (title, content)>
++<!ELEMENT title (#PCDATA)>
++<!ELEMENT content (#PCDATA)>
++]>
++<form>
++  <field>Name</field>
++  <field>Email</field>
++  <button>Submit</button>
++  <section>
++    <title>Section 1</title>
++    <content>Content 1</content>
++  </section>
++</form>
+-- 
+2.49.0
+
