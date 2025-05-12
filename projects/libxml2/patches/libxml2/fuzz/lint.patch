@@ -1,63 +1,78 @@
-From 7960f3bc0a3b13b3a036f99c01455207b2cd6e04 Mon Sep 17 00:00:00 2001
+From 1161d0c9636744167d57c38aa8a4ed9ccfe1aaea Mon Sep 17 00:00:00 2001
 From: Patrick-Pataky <patrick.pataky@epfl.ch>
-Date: Sun, 11 May 2025 17:14:47 +0200
-Subject: [PATCH] [lint]: Adding basic seeds for DTD
+Date: Mon, 12 May 2025 15:33:21 +0200
+Subject: [PATCH] [lint]: Adding more seeds for valid.c (through xmllint
+ --insert)
 
-[lint]: Adding basic seeds for DTD (Makefile part)
-
-[lint]: Fixed Makefile (spaces instead of tabs)
-
-[lint]: The only seed for valid.c in my custom one
 ---
- fuzz/Makefile.am                              |  4 ++--
- fuzz/static_seed/valid/any_empty.xml          | 12 ++++++++++++
- fuzz/static_seed/valid/basic.xml              | 12 ++++++++++++
- .../valid/choice_content_model.xml            | 11 +++++++++++
- fuzz/static_seed/valid/deep_nesting.xml       | 18 ++++++++++++++++++
- fuzz/static_seed/valid/document.dtd           |  4 ++++
- .../static_seed/valid/dtd_external_subset.xml |  8 ++++++++
- fuzz/static_seed/valid/edge1.xml              | 19 +++++++++++++++++++
- fuzz/static_seed/valid/nesting.xml            | 16 ++++++++++++++++
- .../static_seed/valid/optional_repeatable.xml | 18 ++++++++++++++++++
- 10 files changed, 120 insertions(+), 2 deletions(-)
- create mode 100644 fuzz/static_seed/valid/any_empty.xml
- create mode 100644 fuzz/static_seed/valid/basic.xml
- create mode 100644 fuzz/static_seed/valid/choice_content_model.xml
- create mode 100644 fuzz/static_seed/valid/deep_nesting.xml
- create mode 100644 fuzz/static_seed/valid/document.dtd
- create mode 100644 fuzz/static_seed/valid/dtd_external_subset.xml
- create mode 100644 fuzz/static_seed/valid/edge1.xml
- create mode 100644 fuzz/static_seed/valid/nesting.xml
- create mode 100644 fuzz/static_seed/valid/optional_repeatable.xml
+ test/valid/any_empty.xml               | 13 +++++
+ test/valid/attribute_validation.xml    | 30 +++++++++++
+ test/valid/boundry_case.xml            | 20 ++++++++
+ test/valid/choice_model.xml            | 12 +++++
+ test/valid/conditional_dtd.xml         | 20 ++++++++
+ test/valid/conditional_selection.xml   | 25 +++++++++
+ test/valid/deep_nesting.xml            | 19 +++++++
+ test/valid/dtd_inclusion.xml           | 16 ++++++
+ test/valid/dtds/complex.dtd            | 26 ++++++++++
+ test/valid/dtds/complex_validation.dtd | 17 +++++++
+ test/valid/dtds/entity_references.dtd  |  4 ++
+ test/valid/element_group.xml           | 70 ++++++++++++++++++++++++++
+ test/valid/element_sequence.xml        | 14 ++++++
+ test/valid/entity_reference_test.xml   | 22 ++++++++
+ test/valid/entity_test.xml             |  8 +++
+ test/valid/external_dtd.xml            | 21 ++++++++
+ test/valid/fixed_attr.xml              | 34 +++++++++++++
+ test/valid/insertion_validation.xml    | 24 +++++++++
+ test/valid/large.xml                   | 61 ++++++++++++++++++++++
+ test/valid/minimal_valid.xml           |  9 ++++
+ test/valid/mixed_content.xml           | 17 +++++++
+ test/valid/mixed_content_model.xml     | 43 ++++++++++++++++
+ test/valid/multiple_dtd.xml            | 50 ++++++++++++++++++
+ test/valid/multiple_models.xml         | 25 +++++++++
+ test/valid/namespace.xml               | 27 ++++++++++
+ test/valid/notation_test.xml           | 22 ++++++++
+ test/valid/optional_repeatable.xml     | 19 +++++++
+ test/valid/parameter_entity.xml        | 42 ++++++++++++++++
+ test/valid/recursive_elements.xml      | 27 ++++++++++
+ test/valid/rich_attributes.xml         | 18 +++++++
+ 30 files changed, 755 insertions(+)
+ create mode 100644 test/valid/any_empty.xml
+ create mode 100644 test/valid/attribute_validation.xml
+ create mode 100644 test/valid/boundry_case.xml
+ create mode 100644 test/valid/choice_model.xml
+ create mode 100644 test/valid/conditional_dtd.xml
+ create mode 100644 test/valid/conditional_selection.xml
+ create mode 100644 test/valid/deep_nesting.xml
+ create mode 100644 test/valid/dtd_inclusion.xml
+ create mode 100644 test/valid/dtds/complex.dtd
+ create mode 100644 test/valid/dtds/complex_validation.dtd
+ create mode 100644 test/valid/dtds/entity_references.dtd
+ create mode 100644 test/valid/element_group.xml
+ create mode 100644 test/valid/element_sequence.xml
+ create mode 100644 test/valid/entity_reference_test.xml
+ create mode 100644 test/valid/entity_test.xml
+ create mode 100644 test/valid/external_dtd.xml
+ create mode 100644 test/valid/fixed_attr.xml
+ create mode 100644 test/valid/insertion_validation.xml
+ create mode 100644 test/valid/large.xml
+ create mode 100644 test/valid/minimal_valid.xml
+ create mode 100644 test/valid/mixed_content.xml
+ create mode 100644 test/valid/mixed_content_model.xml
+ create mode 100644 test/valid/multiple_dtd.xml
+ create mode 100644 test/valid/multiple_models.xml
+ create mode 100644 test/valid/namespace.xml
+ create mode 100644 test/valid/notation_test.xml
+ create mode 100644 test/valid/optional_repeatable.xml
+ create mode 100644 test/valid/parameter_entity.xml
+ create mode 100644 test/valid/recursive_elements.xml
+ create mode 100644 test/valid/rich_attributes.xml
 
-diff --git a/fuzz/Makefile.am b/fuzz/Makefile.am
-index 373aa26f..3c7645e1 100644
---- a/fuzz/Makefile.am
-+++ b/fuzz/Makefile.am
-@@ -4,7 +4,7 @@ EXTRA_PROGRAMS = genSeed \
- 		 xml xpath
- check_PROGRAMS = testFuzzer
- EXTRA_DIST = html.dict regexp.dict schema.dict xml.dict xpath.dict \
--	     static_seed/uri static_seed/regexp fuzz.h
-+	     static_seed/uri static_seed/regexp static_seed/valid fuzz.h
- CLEANFILES = $(EXTRA_PROGRAMS)
- AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include
- DEPENDENCIES = $(top_builddir)/libxml2.la
-@@ -68,7 +68,7 @@ fuzz-xml: xml$(EXEEXT) seed/xml.stamp
- 
- seed/valid.stamp: genSeed$(EXEEXT)
- 	@mkdir -p seed/valid
--	./genSeed$(EXEEXT) valid $(XML_SEED_CORPUS_SRC)
-+	cp -r $(srcdir)/static_seed/valid seed
- 	@touch seed/valid.stamp
- 
- valid_SOURCES = valid.c fuzz.c
-diff --git a/fuzz/static_seed/valid/any_empty.xml b/fuzz/static_seed/valid/any_empty.xml
+diff --git a/test/valid/any_empty.xml b/test/valid/any_empty.xml
 new file mode 100644
-index 00000000..055d6c9d
+index 00000000..e276021c
 --- /dev/null
-+++ b/fuzz/static_seed/valid/any_empty.xml
-@@ -0,0 +1,12 @@
++++ b/test/valid/any_empty.xml
+@@ -0,0 +1,13 @@
 +<?xml version="1.0"?>
 +<!DOCTYPE container [
 +<!ELEMENT container (empty-elem|any-elem)*>
@@ -70,95 +85,49 @@ index 00000000..055d6c9d
 +    <custom>This can be anything</custom>
 +  </any-elem>
 +</container>
-diff --git a/fuzz/static_seed/valid/basic.xml b/fuzz/static_seed/valid/basic.xml
++
+diff --git a/test/valid/attribute_validation.xml b/test/valid/attribute_validation.xml
 new file mode 100644
-index 00000000..44b8ef64
+index 00000000..b1f91cdf
 --- /dev/null
-+++ b/fuzz/static_seed/valid/basic.xml
-@@ -0,0 +1,12 @@
++++ b/test/valid/attribute_validation.xml
+@@ -0,0 +1,30 @@
 +<?xml version="1.0"?>
-+<!DOCTYPE root [
-+<!ELEMENT root (child1, child2, child3)>
-+<!ELEMENT child1 (#PCDATA)>
-+<!ELEMENT child2 (#PCDATA)>
-+<!ELEMENT child3 (#PCDATA)>
++<!DOCTYPE products [
++<!ELEMENT products (product+)>
++<!ELEMENT product (name, price, description?, stock)>
++<!ATTLIST product
++          id ID #REQUIRED
++          category (electronics|clothing|books|food) "electronics"
++          sale (yes|no) "no">
++<!ELEMENT name (#PCDATA)>
++<!ELEMENT price (#PCDATA)>
++<!ELEMENT description (#PCDATA)>
++<!ELEMENT stock EMPTY>
++<!ATTLIST stock
++          quantity CDATA #REQUIRED
++          warehouse CDATA #IMPLIED>
 +]>
-+<root>
-+  <child1>Text</child1>
-+  <child2>Text</child2>
-+  <child3>Text</child3>
-+</root>
-diff --git a/fuzz/static_seed/valid/choice_content_model.xml b/fuzz/static_seed/valid/choice_content_model.xml
++<products>
++  <product id="p1" category="electronics" sale="yes">
++    <name>Smartphone</name>
++    <price>499.99</price>
++    <description>High-quality smartphone with advanced features</description>
++    <stock quantity="25" warehouse="A1"/>
++  </product>
++  <product id="p2" category="books">
++    <name>Programming Manual</name>
++    <price>39.99</price>
++    <stock quantity="100"/>
++  </product>
++</products>
++
+diff --git a/test/valid/boundry_case.xml b/test/valid/boundry_case.xml
 new file mode 100644
-index 00000000..3417b49e
+index 00000000..087a0485
 --- /dev/null
-+++ b/fuzz/static_seed/valid/choice_content_model.xml
-@@ -0,0 +1,11 @@
-+<?xml version="1.0"?>
-+<!DOCTYPE message [
-+<!ELEMENT message (header, (text|binary))>
-+<!ELEMENT header (#PCDATA)>
-+<!ELEMENT text (#PCDATA)>
-+<!ELEMENT binary EMPTY>
-+]>
-+<message>
-+  <header>Message Header</header>
-+  <text>This is a text message</text>
-+</message>
-diff --git a/fuzz/static_seed/valid/deep_nesting.xml b/fuzz/static_seed/valid/deep_nesting.xml
-new file mode 100644
-index 00000000..c169673b
---- /dev/null
-+++ b/fuzz/static_seed/valid/deep_nesting.xml
-@@ -0,0 +1,18 @@
-+<?xml version="1.0"?>
-+<!DOCTYPE complex [
-+<!ELEMENT complex (level1)>
-+<!ELEMENT level1 (level2+)>
-+<!ELEMENT level2 (level3*)>
-+<!ELEMENT level3 (level4?)>
-+<!ELEMENT level4 (#PCDATA|level5)*>
-+<!ELEMENT level5 (#PCDATA)>
-+]>
-+<complex>
-+  <level1>
-+    <level2>
-+      <level3>
-+        <level4>Text<level5>Nested text</level5></level4>
-+      </level3>
-+    </level2>
-+  </level1>
-+</complex>
-diff --git a/fuzz/static_seed/valid/document.dtd b/fuzz/static_seed/valid/document.dtd
-new file mode 100644
-index 00000000..4750537f
---- /dev/null
-+++ b/fuzz/static_seed/valid/document.dtd
-@@ -0,0 +1,4 @@
-+<!ELEMENT document (section+)>
-+<!ELEMENT section (title, para+)>
-+<!ELEMENT title (#PCDATA)>
-+<!ELEMENT para (#PCDATA)>
-diff --git a/fuzz/static_seed/valid/dtd_external_subset.xml b/fuzz/static_seed/valid/dtd_external_subset.xml
-new file mode 100644
-index 00000000..98e1076d
---- /dev/null
-+++ b/fuzz/static_seed/valid/dtd_external_subset.xml
-@@ -0,0 +1,8 @@
-+<?xml version="1.0"?>
-+<!DOCTYPE document SYSTEM "document.dtd">
-+<document>
-+  <section>
-+    <title>Testing External Subset</title>
-+    <para>This document references an external DTD</para>
-+  </section>
-+</document>
-diff --git a/fuzz/static_seed/valid/edge1.xml b/fuzz/static_seed/valid/edge1.xml
-new file mode 100644
-index 00000000..278f5033
---- /dev/null
-+++ b/fuzz/static_seed/valid/edge1.xml
-@@ -0,0 +1,19 @@
++++ b/test/valid/boundry_case.xml
+@@ -0,0 +1,20 @@
 +<?xml version="1.0"?>
 +<!DOCTYPE boundary [
 +<!ELEMENT boundary ((a|b|c|d|e|f|g|h|i|j)+)>
@@ -178,12 +147,517 @@ index 00000000..278f5033
 +  <b>Text</b>
 +  <c>Text</c>
 +</boundary>
-diff --git a/fuzz/static_seed/valid/nesting.xml b/fuzz/static_seed/valid/nesting.xml
++
+diff --git a/test/valid/choice_model.xml b/test/valid/choice_model.xml
 new file mode 100644
-index 00000000..0c6ff6cc
+index 00000000..030b68a9
 --- /dev/null
-+++ b/fuzz/static_seed/valid/nesting.xml
++++ b/test/valid/choice_model.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0"?>
++<!DOCTYPE message [
++<!ELEMENT message (header, (text|binary))>
++<!ELEMENT header (#PCDATA)>
++<!ELEMENT text (#PCDATA)>
++<!ELEMENT binary EMPTY>
++]>
++<message>
++  <header>Message Header</header>
++  <text>This is a text message</text>
++</message>
++
+diff --git a/test/valid/conditional_dtd.xml b/test/valid/conditional_dtd.xml
+new file mode 100644
+index 00000000..1378ec0e
+--- /dev/null
++++ b/test/valid/conditional_dtd.xml
+@@ -0,0 +1,20 @@
++<?xml version="1.0"?>
++<!DOCTYPE root [
++<!ELEMENT root (child1, child2?, (child3|child4)*, child5+)>
++<!ELEMENT child1 (#PCDATA)>
++<!ELEMENT child2 (#PCDATA)>
++<!ELEMENT child3 (#PCDATA)>
++<!ELEMENT child4 (#PCDATA)>
++<!ELEMENT child5 (subchild1, subchild2?)>
++<!ELEMENT subchild1 (#PCDATA)>
++<!ELEMENT subchild2 (#PCDATA)>
++]>
++<root>
++  <child1>First child</child1>
++  <child3>Third optional child</child3>
++  <child4>Fourth optional child</child4>
++  <child5>
++    <subchild1>Subchild content</subchild1>
++  </child5>
++</root>
++
+diff --git a/test/valid/conditional_selection.xml b/test/valid/conditional_selection.xml
+new file mode 100644
+index 00000000..afe5fb84
+--- /dev/null
++++ b/test/valid/conditional_selection.xml
+@@ -0,0 +1,25 @@
++<?xml version="1.0"?>
++<!DOCTYPE root [
++<!ELEMENT root (production|development)>
++<!ELEMENT production (feature+)>
++<!ELEMENT development (feature+, debug?)>
++<!ELEMENT feature EMPTY>
++<!ATTLIST feature name CDATA #REQUIRED enabled (true|false) "true">
++<!ELEMENT debug (#PCDATA)>
++<!ENTITY % prod "INCLUDE">
++<!ENTITY % dev "IGNORE">
++<![ %prod; [
++  <!ELEMENT config (#PCDATA)>
++]]>
++<![ %dev; [
++  <!ELEMENT config (#PCDATA|debug)*>
++]]>
++]>
++<root>
++  <production>
++    <feature name="login" enabled="true"/>
++    <feature name="reports" enabled="true"/>
++    <feature name="admin" enabled="false"/>
++  </production>
++</root>
++
+diff --git a/test/valid/deep_nesting.xml b/test/valid/deep_nesting.xml
+new file mode 100644
+index 00000000..9f89f552
+--- /dev/null
++++ b/test/valid/deep_nesting.xml
+@@ -0,0 +1,19 @@
++<?xml version="1.0"?>
++<!DOCTYPE complex [
++<!ELEMENT complex (level1)>
++<!ELEMENT level1 (level2+)>
++<!ELEMENT level2 (level3*)>
++<!ELEMENT level3 (level4?)>
++<!ELEMENT level4 (#PCDATA|level5)*>
++<!ELEMENT level5 (#PCDATA)>
++]>
++<complex>
++  <level1>
++    <level2>
++      <level3>
++        <level4>Text<level5>Nested text</level5></level4>
++      </level3>
++    </level2>
++  </level1>
++</complex>
++
+diff --git a/test/valid/dtd_inclusion.xml b/test/valid/dtd_inclusion.xml
+new file mode 100644
+index 00000000..4b769fb4
+--- /dev/null
++++ b/test/valid/dtd_inclusion.xml
 @@ -0,0 +1,16 @@
++<?xml version="1.0"?>
++<!DOCTYPE dataset SYSTEM "dtds/complex_validation.dtd">
++<dataset>
++  <record id="r1" type="normal" created="2023-01-15">
++    <field name="title" datatype="string" required="true">Sample Record</field>
++    <field name="count" datatype="number">
++      <subfield name="initial" value="10">10</subfield>
++      <subfield name="current" value="15">15</subfield>
++    </field>
++    <field name="active" datatype="boolean" required="true">true</field>
++  </record>
++  <record id="r2" type="archived">
++    <field name="title" datatype="string" required="true">Old Record</field>
++    <field name="count" datatype="number">5</field>
++  </record>
++</dataset>
+diff --git a/test/valid/dtds/complex.dtd b/test/valid/dtds/complex.dtd
+new file mode 100644
+index 00000000..aef7dbcf
+--- /dev/null
++++ b/test/valid/dtds/complex.dtd
+@@ -0,0 +1,26 @@
++<!ELEMENT document (header, body, footer?)>
++<!ELEMENT header (title, meta*)>
++<!ELEMENT body (section+)>
++<!ELEMENT footer (copyright, contact?)>
++<!ELEMENT title (#PCDATA)>
++<!ELEMENT meta EMPTY>
++<!ELEMENT section (heading, paragraph+, (table|list)*)>
++<!ELEMENT heading (#PCDATA)>
++<!ELEMENT paragraph (#PCDATA|em|strong)*>
++<!ELEMENT em (#PCDATA)>
++<!ELEMENT strong (#PCDATA)>
++<!ELEMENT table (tr+)>
++<!ELEMENT tr (td+)>
++<!ELEMENT td (#PCDATA)>
++<!ELEMENT list (item+)>
++<!ELEMENT item (#PCDATA)>
++<!ELEMENT copyright (#PCDATA)>
++<!ELEMENT contact (#PCDATA)>
++
++<!ATTLIST meta 
++    name CDATA #REQUIRED
++    content CDATA #REQUIRED>
++<!ATTLIST section 
++    id ID #IMPLIED
++    class CDATA #IMPLIED>
++
+diff --git a/test/valid/dtds/complex_validation.dtd b/test/valid/dtds/complex_validation.dtd
+new file mode 100644
+index 00000000..34174b5d
+--- /dev/null
++++ b/test/valid/dtds/complex_validation.dtd
+@@ -0,0 +1,17 @@
++<!ELEMENT dataset (record*)>
++<!ELEMENT record (field+)>
++<!ATTLIST record
++          id ID #REQUIRED
++          type (normal|special|archived) "normal"
++          created CDATA #IMPLIED>
++<!ELEMENT field (#PCDATA|subfield)*>
++<!ATTLIST field
++          name CDATA #REQUIRED
++          datatype (string|number|date|boolean) "string"
++          required (true|false) "false"
++          maxlength CDATA #IMPLIED>
++<!ELEMENT subfield (#PCDATA)>
++<!ATTLIST subfield
++          name CDATA #REQUIRED
++          value CDATA #IMPLIED>
++
+diff --git a/test/valid/dtds/entity_references.dtd b/test/valid/dtds/entity_references.dtd
+new file mode 100644
+index 00000000..f53e910b
+--- /dev/null
++++ b/test/valid/dtds/entity_references.dtd
+@@ -0,0 +1,4 @@
++<!ENTITY standard "This is a standard entity">
++<!ENTITY % paramEntity "This is a parameter entity">
++<!ELEMENT doc (#PCDATA)>
++
+diff --git a/test/valid/element_group.xml b/test/valid/element_group.xml
+new file mode 100644
+index 00000000..a76666fc
+--- /dev/null
++++ b/test/valid/element_group.xml
+@@ -0,0 +1,70 @@
++<?xml version="1.0"?>
++<!DOCTYPE spec [
++<!ELEMENT spec (metadata, (chapter|appendix)+, index?)>
++<!ELEMENT metadata (title, author+, date, version)>
++<!ELEMENT title (#PCDATA)>
++<!ELEMENT author (#PCDATA)>
++<!ELEMENT date (#PCDATA)>
++<!ELEMENT version (#PCDATA)>
++<!ELEMENT chapter (title, section+)>
++<!ATTLIST chapter id ID #REQUIRED>
++<!ELEMENT appendix (title, section*)>
++<!ATTLIST appendix id ID #REQUIRED>
++<!ELEMENT section (title, (para|list|code|table|figure)*)>
++<!ATTLIST section id ID #REQUIRED>
++<!ELEMENT para (#PCDATA|term|xref|footnote)*>
++<!ELEMENT term (#PCDATA)>
++<!ATTLIST term def IDREF #IMPLIED>
++<!ELEMENT xref EMPTY>
++<!ATTLIST xref ref IDREF #REQUIRED>
++<!ELEMENT footnote (#PCDATA|para)*>
++<!ELEMENT list (item+)>
++<!ATTLIST list type (bullet|number|definition) "bullet">
++<!ELEMENT item (#PCDATA|para)*>
++<!ELEMENT code (#PCDATA)>
++<!ELEMENT table (row+)>
++<!ELEMENT row (cell+)>
++<!ELEMENT cell (#PCDATA|para)*>
++<!ELEMENT figure (graphic, caption)>
++<!ELEMENT graphic EMPTY>
++<!ATTLIST graphic source CDATA #REQUIRED>
++<!ELEMENT caption (#PCDATA)>
++<!ELEMENT index (entry+)>
++<!ELEMENT entry (#PCDATA)>
++<!ATTLIST entry ref IDREF #REQUIRED>
++]>
++<spec>
++  <metadata>
++    <title>Element Groups Example</title>
++    <author>John Doe</author>
++    <date>2023-06-15</date>
++    <version>1.0</version>
++  </metadata>
++  <chapter id="ch1">
++    <title>Introduction</title>
++    <section id="sec1.1">
++      <title>Background</title>
++      <para>This document demonstrates element groups in DTDs. A <term def="term1">term</term> 
++      can be referenced and defined elsewhere.</para>
++      <list type="bullet">
++        <item>First bullet point</item>
++        <item>Second bullet point with <term>special terminology</term></item>
++      </list>
++    </section>
++  </chapter>
++  <appendix id="appA">
++    <title>Additional Information</title>
++    <section id="secA.1">
++      <title>Related Work</title>
++      <para>See <xref ref="ch1"/> for more information.</para>
++      <figure>
++        <graphic source="figure1.png"/>
++        <caption>Sample diagram</caption>
++      </figure>
++    </section>
++  </appendix>
++  <index>
++    <entry ref="sec1.1">Background</entry>
++    <entry ref="secA.1">Related Work</entry>
++  </index>
++</spec>
+diff --git a/test/valid/element_sequence.xml b/test/valid/element_sequence.xml
+new file mode 100644
+index 00000000..9163f5ec
+--- /dev/null
++++ b/test/valid/element_sequence.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0"?>
++<!DOCTYPE root [
++<!ELEMENT root (child1, child2, child3)>
++<!ELEMENT child1 (#PCDATA)>
++<!ELEMENT child2 (#PCDATA)>
++<!ELEMENT child3 (#PCDATA)>
++<!ATTLIST root id ID #REQUIRED>
++]>
++<root id="root1">
++  <child1>Text</child1>
++  <child2>Text</child2>
++  <child3>Text</child3>
++</root>
++
+diff --git a/test/valid/entity_reference_test.xml b/test/valid/entity_reference_test.xml
+new file mode 100644
+index 00000000..6e4687dc
+--- /dev/null
++++ b/test/valid/entity_reference_test.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0"?>
++<!DOCTYPE text [
++<!ELEMENT text (#PCDATA|bold|italic|link)*>
++<!ELEMENT bold (#PCDATA|italic|link)*>
++<!ELEMENT italic (#PCDATA|bold|link)*>
++<!ELEMENT link (#PCDATA|bold|italic)*>
++<!ATTLIST link href CDATA #REQUIRED>
++<!ENTITY copy "&#169;">
++<!ENTITY reg "&#174;">
++<!ENTITY tm "&#8482;">
++<!ENTITY amp "&#38;">
++<!ENTITY lt "&#60;">
++<!ENTITY gt "&#62;">
++<!ENTITY example "<bold>This is bold</bold>">
++]>
++<text>
++  This document contains special symbols like &copy;, &reg;, and &tm;.
++  It also has XML escapes like &amp;, &lt;, and &gt;.
++  <bold>This is bold text with <italic>italic</italic> inside</bold>
++  <link href="https://example.com">This is a link with <bold>bold</bold> text</link>
++</text>
++
+diff --git a/test/valid/entity_test.xml b/test/valid/entity_test.xml
+new file mode 100644
+index 00000000..db65c9a0
+--- /dev/null
++++ b/test/valid/entity_test.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0"?>
++<!DOCTYPE doc [
++<!ENTITY % local SYSTEM "dtds/entity_references.dtd">
++%local;
++<!ELEMENT doc (#PCDATA)>
++]>
++<doc>&standard;</doc>
++
+diff --git a/test/valid/external_dtd.xml b/test/valid/external_dtd.xml
+new file mode 100644
+index 00000000..44f653b1
+--- /dev/null
++++ b/test/valid/external_dtd.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0"?>
++<!DOCTYPE document SYSTEM "dtds/complex.dtd">
++<document>
++  <header>
++    <title>Document with External DTD</title>
++    <meta name="author" content="Test Author"/>
++  </header>
++  <body>
++    <section id="sec1">
++      <heading>Section 1</heading>
++      <paragraph>Text with <em>emphasis</em>.</paragraph>
++      <list>
++        <item>Item 1</item>
++        <item>Item 2</item>
++      </list>
++    </section>
++  </body>
++  <footer>
++    <copyright>Copyright 2023</copyright>
++  </footer>
++</document>
+diff --git a/test/valid/fixed_attr.xml b/test/valid/fixed_attr.xml
+new file mode 100644
+index 00000000..3a178fc1
+--- /dev/null
++++ b/test/valid/fixed_attr.xml
+@@ -0,0 +1,34 @@
++<?xml version="1.0"?>
++<!DOCTYPE config [
++<!ELEMENT config (settings, modules)>
++<!ATTLIST config 
++          version CDATA #FIXED "1.0"
++          environment (dev|test|prod) "dev">
++<!ELEMENT settings (setting+)>
++<!ELEMENT setting (#PCDATA)>
++<!ATTLIST setting
++          name CDATA #REQUIRED
++          value CDATA #REQUIRED
++          editable (true|false) "true">
++<!ELEMENT modules (module*)>
++<!ELEMENT module (dependency*)>
++<!ATTLIST module
++          name CDATA #REQUIRED
++          active (true|false) "false">
++<!ELEMENT dependency EMPTY>
++<!ATTLIST dependency
++          module IDREF #REQUIRED>
++]>
++<config version="1.0" environment="prod">
++  <settings>
++    <setting name="timeout" value="30" editable="false">Connection timeout in seconds</setting>
++    <setting name="maxRetries" value="3" editable="true">Maximum retry attempts</setting>
++  </settings>
++  <modules>
++    <module name="auth" active="true"/>
++    <module name="reporting" active="true">
++      <dependency module="auth"/>
++    </module>
++  </modules>
++</config>
++
+diff --git a/test/valid/insertion_validation.xml b/test/valid/insertion_validation.xml
+new file mode 100644
+index 00000000..4152f706
+--- /dev/null
++++ b/test/valid/insertion_validation.xml
+@@ -0,0 +1,24 @@
++<?xml version="1.0"?>
++<!DOCTYPE insertable [
++<!ELEMENT insertable (parent+)>
++<!ELEMENT parent (child1?, child2?, child3?, child4?, child5?)>
++<!ELEMENT child1 (#PCDATA)>
++<!ELEMENT child2 (#PCDATA)>
++<!ELEMENT child3 (#PCDATA)>
++<!ELEMENT child4 (#PCDATA)>
++<!ELEMENT child5 (#PCDATA)>
++<!ATTLIST parent type (complete|partial) "partial">
++]>
++<insertable>
++  <parent type="partial">
++    <child1>First</child1>
++  </parent>
++  <parent type="complete">
++    <child1>First</child1>
++    <child2>Second</child2>
++    <child3>Third</child3>
++    <child4>Fourth</child4>
++    <child5>Fifth</child5>
++  </parent>
++</insertable>
++
+diff --git a/test/valid/large.xml b/test/valid/large.xml
+new file mode 100644
+index 00000000..bbaacb5c
+--- /dev/null
++++ b/test/valid/large.xml
+@@ -0,0 +1,61 @@
++<?xml version="1.0"?>
++<!DOCTYPE document [
++<!ELEMENT document (section+)>
++<!ELEMENT section (h1, (p|ul|ol|table|pre|blockquote|figure|video|audio)+)>
++<!ATTLIST section id ID #REQUIRED>
++<!ELEMENT h1 (#PCDATA|em|strong|code|a|span)*>
++<!ELEMENT p (#PCDATA|em|strong|code|a|span|img|br)*>
++<!ELEMENT ul (li+)>
++<!ELEMENT ol (li+)>
++<!ELEMENT li (#PCDATA|em|strong|code|a|span|img|br|p|ul|ol)*>
++<!ELEMENT table (caption?, tr+)>
++<!ELEMENT caption (#PCDATA|em|strong|code|a|span)*>
++<!ELEMENT tr (th|td)+>
++<!ELEMENT th (#PCDATA|em|strong|code|a|span|img|br)*>
++<!ELEMENT td (#PCDATA|em|strong|code|a|span|img|br|p|ul|ol)*>
++<!ELEMENT pre (#PCDATA|code)*>
++<!ELEMENT blockquote (p+)>
++<!ELEMENT figure (img, figcaption?)>
++<!ELEMENT figcaption (#PCDATA|em|strong|code|a|span)*>
++<!ELEMENT video EMPTY>
++<!ATTLIST video src CDATA #REQUIRED>
++<!ELEMENT audio EMPTY>
++<!ATTLIST audio src CDATA #REQUIRED>
++<!ELEMENT em (#PCDATA|code|a|span)*>
++<!ELEMENT strong (#PCDATA|em|code|a|span)*>
++<!ELEMENT code (#PCDATA)>
++<!ELEMENT a (#PCDATA|em|strong|code|span)*>
++<!ATTLIST a href CDATA #REQUIRED>
++<!ELEMENT span (#PCDATA|em|strong|code|a)*>
++<!ELEMENT img EMPTY>
++<!ATTLIST img src CDATA #REQUIRED alt CDATA #REQUIRED>
++<!ELEMENT br EMPTY>
++]>
++<document>
++  <section id="intro">
++    <h1>Introduction to <em>XML</em> Validation</h1>
++    <p>This document demonstrates complex content models for validation testing.</p>
++    <ul>
++      <li>Simple list item</li>
++      <li>Complex list item with <strong>strong text</strong> and <a href="http://example.com">a link</a></li>
++      <li>List item with nested list
++        <ul>
++          <li>Nested item 1</li>
++          <li>Nested item 2</li>
++        </ul>
++      </li>
++    </ul>
++    <table>
++      <caption>Sample Table</caption>
++      <tr>
++        <th>Header 1</th>
++        <th>Header 2</th>
++      </tr>
++      <tr>
++        <td>Cell 1</td>
++        <td>Cell 2 with <em>emphasis</em></td>
++      </tr>
++    </table>
++  </section>
++</document>
++
+diff --git a/test/valid/minimal_valid.xml b/test/valid/minimal_valid.xml
+new file mode 100644
+index 00000000..042d092d
+--- /dev/null
++++ b/test/valid/minimal_valid.xml
+@@ -0,0 +1,9 @@
++<?xml version="1.0"?>
++<!DOCTYPE root [
++<!ELEMENT root (element1)>
++<!ELEMENT element1 (#PCDATA)>
++]>
++<root>
++  <element1>This is a minimal valid XML document with DTD</element1>
++</root>
++
+diff --git a/test/valid/mixed_content.xml b/test/valid/mixed_content.xml
+new file mode 100644
+index 00000000..324b182b
+--- /dev/null
++++ b/test/valid/mixed_content.xml
+@@ -0,0 +1,17 @@
 +<?xml version="1.0"?>
 +<!DOCTYPE document [
 +<!ELEMENT document (section+)>
@@ -200,12 +674,210 @@ index 00000000..0c6ff6cc
 +    <paragraph>Text with <emphasis>emphasized</emphasis> and <strong>strong</strong> parts.</paragraph>
 +  </section>
 +</document>
-diff --git a/fuzz/static_seed/valid/optional_repeatable.xml b/fuzz/static_seed/valid/optional_repeatable.xml
++
+diff --git a/test/valid/mixed_content_model.xml b/test/valid/mixed_content_model.xml
 new file mode 100644
-index 00000000..82a7908c
+index 00000000..adf3e234
 --- /dev/null
-+++ b/fuzz/static_seed/valid/optional_repeatable.xml
-@@ -0,0 +1,18 @@
++++ b/test/valid/mixed_content_model.xml
+@@ -0,0 +1,43 @@
++<?xml version="1.0"?>
++<!DOCTYPE article [
++<!ELEMENT article (title, author+, content, footnote*)>
++<!ELEMENT title (#PCDATA)>
++<!ELEMENT author (#PCDATA|email)*>
++<!ELEMENT email (#PCDATA)>
++<!ELEMENT content (#PCDATA|paragraph|quote|list|image)*>
++<!ELEMENT paragraph (#PCDATA|emphasis|strong|code|link)*>
++<!ELEMENT emphasis (#PCDATA|link)*>
++<!ELEMENT strong (#PCDATA|link)*>
++<!ELEMENT code (#PCDATA)>
++<!ELEMENT link (#PCDATA)>
++<!ATTLIST link url CDATA #REQUIRED>
++<!ELEMENT quote (#PCDATA|paragraph)*>
++<!ATTLIST quote author CDATA #IMPLIED>
++<!ELEMENT list (item+)>
++<!ATTLIST list type (ordered|unordered) "unordered">
++<!ELEMENT item (#PCDATA|paragraph)*>
++<!ELEMENT image EMPTY>
++<!ATTLIST image
++          src CDATA #REQUIRED
++          alt CDATA #IMPLIED
++          width CDATA #IMPLIED
++          height CDATA #IMPLIED>
++<!ELEMENT footnote (#PCDATA|paragraph)*>
++]>
++<article>
++  <title>Example Article</title>
++  <author>John Doe <email>john@example.com</email></author>
++  <content>
++    <paragraph>This is a <emphasis>sample</emphasis> paragraph with <strong>strong text</strong> and a <link url="https://example.com">link</link>.</paragraph>
++    <quote author="Famous Person">
++      <paragraph>This is a quoted paragraph.</paragraph>
++    </quote>
++    <list type="ordered">
++      <item>First item</item>
++      <item>Second item with <emphasis>emphasis</emphasis></item>
++    </list>
++    <image src="example.jpg" alt="Example Image" width="300" height="200"/>
++  </content>
++  <footnote>This is a footnote</footnote>
++</article>
++
+diff --git a/test/valid/multiple_dtd.xml b/test/valid/multiple_dtd.xml
+new file mode 100644
+index 00000000..1776bb26
+--- /dev/null
++++ b/test/valid/multiple_dtd.xml
+@@ -0,0 +1,50 @@
++<?xml version="1.0"?>
++<!DOCTYPE composite [
++<!ELEMENT composite (section1, section2)>
++<!ELEMENT section1 (persons*)>
++<!ELEMENT section2 (products*)>
++
++<!-- Person DTD -->
++<!ELEMENT persons (person+)>
++<!ELEMENT person (name, age, email?)>
++<!ELEMENT name (#PCDATA)>
++<!ELEMENT age (#PCDATA)>
++<!ELEMENT email (#PCDATA)>
++<!ATTLIST person id ID #REQUIRED>
++
++<!-- Product DTD -->
++<!ELEMENT products (product+)>
++<!ELEMENT product (title, price)>
++<!ELEMENT title (#PCDATA)>
++<!ELEMENT price (#PCDATA)>
++<!ATTLIST product 
++          code ID #REQUIRED
++          inStock (yes|no) "yes">
++]>
++<composite>
++  <section1>
++    <persons>
++      <person id="p1">
++        <name>John Smith</name>
++        <age>30</age>
++        <email>john@example.com</email>
++      </person>
++      <person id="p2">
++        <name>Jane Doe</name>
++        <age>28</age>
++      </person>
++    </persons>
++  </section1>
++  <section2>
++    <products>
++      <product code="pr1" inStock="yes">
++        <title>Product One</title>
++        <price>19.99</price>
++      </product>
++      <product code="pr2" inStock="no">
++        <title>Product Two</title>
++        <price>29.99</price>
++      </product>
++    </products>
++  </section2>
++</composite>
+diff --git a/test/valid/multiple_models.xml b/test/valid/multiple_models.xml
+new file mode 100644
+index 00000000..0baf94ab
+--- /dev/null
++++ b/test/valid/multiple_models.xml
+@@ -0,0 +1,25 @@
++<?xml version="1.0"?>
++<!DOCTYPE data [
++<!ELEMENT data (model1 | model2 | model3)>
++<!ELEMENT model1 (a, b, (c|d))>
++<!ELEMENT model2 ((e|f)*, g+)>
++<!ELEMENT model3 (h?, i+, j*)>
++<!ELEMENT a (#PCDATA)>
++<!ELEMENT b (#PCDATA)>
++<!ELEMENT c (#PCDATA)>
++<!ELEMENT d (#PCDATA)>
++<!ELEMENT e (#PCDATA)>
++<!ELEMENT f (#PCDATA)>
++<!ELEMENT g (#PCDATA)>
++<!ELEMENT h (#PCDATA)>
++<!ELEMENT i (#PCDATA)>
++<!ELEMENT j (#PCDATA)>
++]>
++<data>
++  <model1>
++    <a>Text</a>
++    <b>Text</b>
++    <c>Text</c>
++  </model1>
++</data>
++
+diff --git a/test/valid/namespace.xml b/test/valid/namespace.xml
+new file mode 100644
+index 00000000..a2f64a87
+--- /dev/null
++++ b/test/valid/namespace.xml
+@@ -0,0 +1,27 @@
++<?xml version="1.0"?>
++<!DOCTYPE root [
++<!ELEMENT root (ns1:element|ns2:element)*>
++<!ATTLIST root
++          xmlns:ns1 CDATA #FIXED "http://example.org/namespace1"
++          xmlns:ns2 CDATA #FIXED "http://example.org/namespace2">
++<!ELEMENT ns1:element (ns1:child*)>
++<!ATTLIST ns1:element
++          id ID #REQUIRED
++          ns1:attr CDATA #IMPLIED>
++<!ELEMENT ns1:child (#PCDATA)>
++<!ELEMENT ns2:element (ns2:child*)>
++<!ATTLIST ns2:element
++          id ID #REQUIRED
++          ns2:attr CDATA #IMPLIED>
++<!ELEMENT ns2:child (#PCDATA)>
++]>
++<root xmlns:ns1="http://example.org/namespace1" 
++      xmlns:ns2="http://example.org/namespace2">
++  <ns1:element id="e1" ns1:attr="value1">
++    <ns1:child>Child of namespace 1</ns1:child>
++  </ns1:element>
++  <ns2:element id="e2" ns2:attr="value2">
++    <ns2:child>Child of namespace 2</ns2:child>
++  </ns2:element>
++</root>
++
+diff --git a/test/valid/notation_test.xml b/test/valid/notation_test.xml
+new file mode 100644
+index 00000000..487946ad
+--- /dev/null
++++ b/test/valid/notation_test.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0"?>
++<!DOCTYPE multimedia [
++<!ELEMENT multimedia (item+)>
++<!ELEMENT item (#PCDATA)>
++<!ATTLIST item
++          type NOTATION (gif|jpeg|png|mp3|mp4) #REQUIRED
++          src CDATA #REQUIRED>
++<!NOTATION gif SYSTEM "image/gif">
++<!NOTATION jpeg SYSTEM "image/jpeg">
++<!NOTATION png SYSTEM "image/png">
++<!NOTATION mp3 SYSTEM "audio/mpeg">
++<!NOTATION mp4 SYSTEM "video/mp4">
++<!ENTITY logo SYSTEM "company_logo.png" NDATA png>
++<!ENTITY intro SYSTEM "intro.mp3" NDATA mp3>
++]>
++<multimedia>
++  <item type="png" src="header.png">Header image in PNG format</item>
++  <item type="jpeg" src="photo.jpg">Photo in JPEG format</item>
++  <item type="mp3" src="background.mp3">Background music in MP3 format</item>
++  <item type="mp4" src="tutorial.mp4">Tutorial video in MP4 format</item>
++</multimedia>
++
+diff --git a/test/valid/optional_repeatable.xml b/test/valid/optional_repeatable.xml
+new file mode 100644
+index 00000000..f2e7710e
+--- /dev/null
++++ b/test/valid/optional_repeatable.xml
+@@ -0,0 +1,19 @@
 +<?xml version="1.0"?>
 +<!DOCTYPE form [
 +<!ELEMENT form (field+, button?, section*)>
@@ -224,6 +896,112 @@ index 00000000..82a7908c
 +    <content>Content 1</content>
 +  </section>
 +</form>
++
+diff --git a/test/valid/parameter_entity.xml b/test/valid/parameter_entity.xml
+new file mode 100644
+index 00000000..688e489f
+--- /dev/null
++++ b/test/valid/parameter_entity.xml
+@@ -0,0 +1,42 @@
++<?xml version="1.0"?>
++<!DOCTYPE document [
++<!ENTITY % common.att "
++  id ID #IMPLIED
++  class CDATA #IMPLIED
++  xml:lang CDATA #IMPLIED">
++<!ENTITY % block.content "(#PCDATA|p|div)*">
++<!ENTITY % inline.content "(#PCDATA|span|em|strong)*">
++<!ELEMENT document (header, body)>
++<!ATTLIST document %common.att;>
++<!ELEMENT header (title, subtitle?)>
++<!ATTLIST header %common.att;>
++<!ELEMENT title %inline.content;>
++<!ATTLIST title %common.att;>
++<!ELEMENT subtitle %inline.content;>
++<!ATTLIST subtitle %common.att;>
++<!ELEMENT body (div+)>
++<!ATTLIST body %common.att;>
++<!ELEMENT div %block.content;>
++<!ATTLIST div %common.att;>
++<!ELEMENT p %inline.content;>
++<!ATTLIST p %common.att;>
++<!ELEMENT span %inline.content;>
++<!ATTLIST span %common.att;>
++<!ELEMENT em %inline.content;>
++<!ATTLIST em %common.att;>
++<!ELEMENT strong %inline.content;>
++<!ATTLIST strong %common.att;>
++]>
++<document id="doc1" xml:lang="en">
++  <header>
++    <title>Parameter <em>Entity</em> Example</title>
++    <subtitle>Using DTD with parameter entities</subtitle>
++  </header>
++  <body>
++    <div id="section1">
++      <p>This is a <span class="important">demonstration</span> of parameter entities in DTDs.</p>
++      <p>They allow for <strong>reusable</strong> attribute and content definitions.</p>
++    </div>
++  </body>
++</document>
++
+diff --git a/test/valid/recursive_elements.xml b/test/valid/recursive_elements.xml
+new file mode 100644
+index 00000000..4445582f
+--- /dev/null
++++ b/test/valid/recursive_elements.xml
+@@ -0,0 +1,27 @@
++<?xml version="1.0"?>
++<!DOCTYPE filesystem [
++<!ELEMENT filesystem (directory|file)*>
++<!ELEMENT directory (directory|file)*>
++<!ATTLIST directory name CDATA #REQUIRED>
++<!ELEMENT file (#PCDATA)>
++<!ATTLIST file 
++          name CDATA #REQUIRED
++          size CDATA #IMPLIED
++          type CDATA #IMPLIED>
++]>
++<filesystem>
++  <directory name="root">
++    <directory name="home">
++      <directory name="user">
++        <file name="document.txt" size="1024" type="text">Content here</file>
++        <file name="image.jpg" size="2048" type="image">Binary data</file>
++      </directory>
++    </directory>
++    <directory name="var">
++      <directory name="log">
++        <file name="system.log" size="4096">Log contents</file>
++      </directory>
++    </directory>
++  </directory>
++</filesystem>
++
+diff --git a/test/valid/rich_attributes.xml b/test/valid/rich_attributes.xml
+new file mode 100644
+index 00000000..95012409
+--- /dev/null
++++ b/test/valid/rich_attributes.xml
+@@ -0,0 +1,18 @@
++<?xml version="1.0"?>
++<!DOCTYPE product [
++<!ELEMENT product (name, description, price)>
++<!ELEMENT name (#PCDATA)>
++<!ELEMENT description (#PCDATA)>
++<!ELEMENT price (#PCDATA)>
++<!ATTLIST product 
++    id ID #REQUIRED
++    category (electronics|books|clothing) "electronics"
++    available (yes|no) "yes">
++<!ATTLIST price currency CDATA #REQUIRED>
++]>
++<product id="prod123" category="electronics" available="yes">
++  <name>Smartphone</name>
++  <description>High-end smartphone with advanced features</description>
++  <price currency="USD">999.99</price>
++</product>
++
 -- 
 2.49.0
 
