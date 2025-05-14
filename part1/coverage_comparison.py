@@ -109,7 +109,7 @@ no_seed_root = "report/w_o_corpus/linux/src"
 
 file_paths_with_seed, file_paths_no_seed = get_file_pairs(seed_root, no_seed_root)
 
-output_file = "lo.txt"
+output_file = "report/coverage_comparison_results.txt"
 compare_reports_with_multiple_files(file_paths_with_seed, file_paths_no_seed, output_file)
 
 print(f"\n✅ Done! Comparison results saved to: {output_file}")
