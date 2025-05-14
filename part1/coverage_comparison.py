@@ -1,3 +1,4 @@
+# pip install beautifulsoup4
 import os
 from bs4 import BeautifulSoup
 
