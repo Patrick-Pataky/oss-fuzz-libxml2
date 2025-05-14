@@ -1,6 +1,6 @@
 diff --git a/part1/coverage_comparison.py b/part1/coverage_comparison.py
 new file mode 100644
-index 000000000..613413952
+index 000000000..5734491d7
 --- /dev/null
 +++ b/part1/coverage_comparison.py
 @@ -0,0 +1,114 @@
@@ -110,7 +110,7 @@ index 000000000..613413952
 +    return file_paths_with_seed, file_paths_no_seed
 +
 +seed_root = "coverage/coverageXmlSeed/linux/src"
-+no_seed_root = "coverage/coverageXmlNoSeed2/linux/src"
++no_seed_root = "coverage/coverageXmlNoSeed/linux/src"
 +
 +file_paths_with_seed, file_paths_no_seed = get_file_pairs(seed_root, no_seed_root)
 +
