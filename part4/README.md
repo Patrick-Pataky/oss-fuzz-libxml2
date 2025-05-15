@@ -4,11 +4,11 @@ This bug is described in:
 - https://gitlab.gnome.org/GNOME/libxml2/-/issues/604
 
 
-To reproduce the bug the reproduce bug script:
+To reproduce the bug the run.poc.sh script:
 
-**Make sure that docker is installed in your machine before running this script.**
+**Make sure that docker is installed in your machine before running this script. Also make sure that the script is an executable.**
 ```sh
-./reproduce_bug.sh
+./run.poc.sh
 ```
 
 or just run the following commands:
