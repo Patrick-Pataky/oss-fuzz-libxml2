@@ -5,13 +5,41 @@
 1. Clone the submodule (the libxml2 library):
 ```bash
 git submodule update --init --recursive
-git reset --hard 1039cd53
+cd projects/libxml2/libxml2 && git reset --hard 1039cd53
+cd -
 ```
 
 2. Build the libxml2 image:
 ```bash
 python3 infra/helper.py build_image libxml2
 ```
+
+## Parts
+
+### part1
+
+```bash
+cd part1
+sh run.w_corpus.sh
+sh run.w_o_corpus.sh
+```
+
+And get the coverage:
+```bash
+python3 ../infra/helper.py build_fuzzers --sanitizer coverage libxml2
+python3 ../infra/helper.py coverage libxml2 --corpus-dir build/out/part1Seed/ --fuzz-target xml
+python3 ../infra/helper.py coverage libxml2 --corpus-dir build/out/part1NoSeed/ --fuzz-target xml
+```
+
+### part3
+
+Follow the instructions in `part3/README.md` to run the fuzzers.
+
+### part4
+
+Follow the instructions in `part4/README.md`.
+
+## General Commands
 
 The fuzzers are built from the `libxml2/fuzz/` directory.
 
