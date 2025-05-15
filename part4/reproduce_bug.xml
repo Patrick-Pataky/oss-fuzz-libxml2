@@ -1,0 +1,14 @@
+<!DOCTYPE doc [
+    <!ELEMENT doc (elem)> 
+]>
+<doc xmlns:xi="http://www.w3.org/2001/XInclude">
+    <xi:include href="404.xml">
+        <xi:include href="404.xml">
+            <xi:fallback>
+                <xi:fallback>
+                    <fb1/>
+                </xi:fallback>
+            </xi:fallback>
+        </xi:include>
+    </xi:include>
+</doc>
