@@ -1,0 +1,146 @@
+From 0819738ca123cb9515b9abbf16440cee33bee016 Mon Sep 17 00:00:00 2001
+From: Patrick-Pataky <patrick.pataky@epfl.ch>
+Date: Wed, 14 May 2025 19:06:58 +0200
+Subject: [PATCH] [api] Adding test to xmlXPathNodeSetContains
+
+---
+ fuzz/api.c | 60 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 60 insertions(+)
+
+diff --git a/fuzz/api.c b/fuzz/api.c
+index ba738db4..81725949 100644
+--- a/fuzz/api.c
++++ b/fuzz/api.c
+@@ -43,6 +43,8 @@
+ #include <libxml/HTMLtree.h>
+ #include <libxml/parser.h>
+ #include <libxml/tree.h>
++#include <libxml/xpath.h>
++#include <libxml/xpathInternals.h>
+ #include <libxml/xmlerror.h>
+ #include "fuzz.h"
+ 
+@@ -56,6 +58,8 @@
+ #define MAX_COPY_NODES   50
+ #define MAX_COPY_OPS     20
+ 
++#define NODE_SET_SIZE     8
++
+ typedef enum {
+     /* Basic operations */
+     OP_CREATE_INTEGER,
+@@ -295,6 +299,9 @@ typedef enum {
+     OP_HTML_NODE_DUMP_OUTPUT,
+     OP_HTML_NODE_DUMP_FORMAT_OUTPUT,
+ 
++    /*** xpath.h */
++    OP_XML_XPATH_NODE_SET_CONTAINS,
++
+     OP_MAX
+ } opType;
+ 
+@@ -372,6 +379,7 @@ typedef struct {
+     int integers[REG_MAX];
+     xmlChar *strings[REG_MAX];
+     xmlNodePtr nodes[REG_MAX];
++    xmlNodeSet nodeSet;
+ } xmlFuzzApiVars;
+ 
+ static xmlFuzzApiVars varsStruct;
+@@ -491,6 +499,32 @@ incStrIdx(void) {
+ static void
+ dropNode(xmlNodePtr node);
+ 
++static void
++addNodeToSet(xmlNodePtr node) {
++    if (node == NULL || (xmlFuzzReadInt(1) % 3 != 0))
++        return;
++
++    if (vars->nodeSet.nodeNr >= vars->nodeSet.nodeMax) {
++        return;
++    }
++
++    vars->nodeSet.nodeTab[vars->nodeSet.nodeNr++] = node;
++}
++
++static void
++removeNodeFromSet(xmlNodePtr node) {
++    if (node == NULL || vars->nodeSet.nodeNr == 0 || vars->nodeSet.nodeTab == NULL)
++        return;
++
++    // search and remove
++    for (int i = 0; i < vars->nodeSet.nodeNr; i++) {
++        if (vars->nodeSet.nodeTab[i] == node) {
++            vars->nodeSet.nodeTab[i] = vars->nodeSet.nodeTab[--vars->nodeSet.nodeNr];
++            break;
++        }
++    }
++}
++
+ static xmlNodePtr
+ getNode(int offset) {
+     int idx = (vars->nodeIdx - offset - 1) & REG_MASK;
+@@ -552,6 +586,7 @@ setNode(int offset, xmlNodePtr node) {
+     if (node != oldNode) {
+         vars->nodes[idx] = node;
+         dropNode(oldNode);
++        addNodeToSet(node);
+     }
+ 
+     if (node == NULL)
+@@ -654,6 +689,8 @@ dropNode(xmlNodePtr node) {
+     tree = nodeGetTree(node);
+     doc = node->doc;
+ 
++    removeNodeFromSet(node);
++
+     for (i = 0; i < REG_MAX; i++) {
+         xmlNodePtr other;
+ 
+@@ -980,6 +1017,15 @@ LLVMFuzzerTestOneInput(const char *data, size_t size) {
+ 
+     memset(vars, 0, sizeof(*vars));
+ 
++    vars->nodeSet.nodeNr = 0;
++    vars->nodeSet.nodeMax = NODE_SET_SIZE;
++    vars->nodeSet.nodeTab = (xmlNodePtr *) xmlMalloc(
++        NODE_SET_SIZE * sizeof(xmlNodePtr));
++    if (vars->nodeSet.nodeTab == NULL) {
++        fprintf(stderr, "out of memory\n");
++        abort();
++    }
++
+     xmlFuzzDataInit(data, size);
+ 
+     failurePos = xmlFuzzReadInt(4) % (size * 50 + 10);
+@@ -3574,6 +3620,15 @@ LLVMFuzzerTestOneInput(const char *data, size_t size) {
+                 oomReport = 0;
+                 break;
+ 
++            case OP_XML_XPATH_NODE_SET_CONTAINS: {
++                startOp("xmlXPathNodeSetContains");
++                incIntIdx();
++                setInt(0, xmlXPathNodeSetContains(&vars->nodeSet, getNode(0)));
++                oomReport = 0;
++                endOp();
++                break;
++            }
++
+             default:
+                 break;
+         }
+@@ -3591,6 +3646,11 @@ LLVMFuzzerTestOneInput(const char *data, size_t size) {
+         dropNode(node);
+     }
+ 
++    if (vars->nodeSet.nodeTab != NULL) {
++        xmlFree(vars->nodeSet.nodeTab);
++        vars->nodeSet.nodeTab = NULL;
++    }
++
+     xmlFuzzInjectFailure(0);
+     xmlFuzzDataCleanup();
+     xmlResetLastError();
+-- 
+2.49.0
+
