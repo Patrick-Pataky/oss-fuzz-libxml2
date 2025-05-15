@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: run.improve1.sh
+# Usage: ./run.improve1.sh
 
 set -e
 
@@ -9,9 +9,11 @@ set -e
 
 HARNESS="catalog"
 
-P1="build/1"
-P2="build/2"
-P3="build/3"
+CURR_PATH=$(pwd)
+
+P1="${CURR_PATH}/build/1"
+P2="${CURR_PATH}/build/2"
+P3="${CURR_PATH}/build/3"
 
 mkdir -p $P1
 mkdir -p $P2
@@ -21,7 +23,7 @@ mkdir -p $P3
 python3 ../../infra/helper.py build_fuzzers libxml2
 
 python3 ../../infra/helper.py run_fuzzer --corpus-dir $P1 --sanitizer none \
-    libxml2 $HARNESS -- -max_total_time=14400 -fork=1
+    libxml2 $HARNESS -- -max_total_time=14400
 python3 ../../infra/helper.py run_fuzzer --corpus-dir $P2 --sanitizer none \
     libxml2 $HARNESS -- -max_total_time=14400 -fork=1
 python3 ../../infra/helper.py run_fuzzer --corpus-dir $P3 --sanitizer none \
@@ -34,12 +36,12 @@ cp -r $P3/* $P1
 rm -rf $P2
 rm -rf $P3
 
-python3 infra/helper.py build_fuzzers libxml2 --sanitizer coverage
+python3 ../../infra/helper.py build_fuzzers libxml2 --sanitizer coverage
 
-COV_PATH="coverage_improve1"
+COV_PATH="${CURR_PATH}/coverage_improve1"
 rm -rf $COV_PATH
 mkdir -p $COV_PATH
 
-python3 infra/helper.py coverage libxml2 --fuzz-target $1 --corpus-dir $COV_PATH
+python3 ../../infra/helper.py coverage libxml2 --fuzz-target $1 --corpus-dir $COV_PATH
 
 echo "Done!"

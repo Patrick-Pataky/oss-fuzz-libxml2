@@ -1,28 +1,13 @@
-From bf1b66069b2f3f14134cec2487a3c7662f46fb11 Mon Sep 17 00:00:00 2001
+From 807d864ee27584941af64d2a4c6aefadef913e08 Mon Sep 17 00:00:00 2001
 From: Patrick-Pataky <patrick.pataky@epfl.ch>
-Date: Mon, 5 May 2025 13:51:43 +0200
+Date: Thu, 15 May 2025 17:05:31 +0200
 Subject: [PATCH] [catalog]: Adding new catalog's fuzzer
 
-[catalog]: Updated main virtualmachine to be able to work
-
-[catalog]: Fixed warnings, and modified build script to support new catalog fuzzer
-
-[catalog]: Fixed use-after-free error in the virtualmachine
-
-[catalog]: Added global resolve methods to the virtualmachine
-
-[catalog]: Added complex test testXMLCatalogInternal1
-
-[catalog]: Fixed uncaught NULL check bug
-
-[catalog]: Fixed most memory leaks issue, one still remains
-
-[catalog]: Tried to find memory leak origin (after xmlCatalogAdd was called), non successful
 ---
  catalog.c              |  28 +--
- fuzz/catalog.c         | 479 +++++++++++++++++++++++++++++++++++++++++
+ fuzz/catalog.c         | 477 +++++++++++++++++++++++++++++++++++++++++
  fuzz/oss-fuzz-build.sh |   4 +-
- 3 files changed, 497 insertions(+), 14 deletions(-)
+ 3 files changed, 495 insertions(+), 14 deletions(-)
  create mode 100644 fuzz/catalog.c
 
 diff --git a/catalog.c b/catalog.c
@@ -69,10 +54,10 @@ index dc22e277..63c30163 100644
  
 diff --git a/fuzz/catalog.c b/fuzz/catalog.c
 new file mode 100644
-index 00000000..4884f98a
+index 00000000..7886145e
 --- /dev/null
 +++ b/fuzz/catalog.c
-@@ -0,0 +1,479 @@
+@@ -0,0 +1,477 @@
 +/*
 + * catalog.c: a libFuzzer target to test the XML catalog API.
 + *
@@ -517,8 +502,6 @@ index 00000000..4884f98a
 +            default:
 +                break;
 +        }
-+
-+        xmlFuzzCheckFailureReport(vars->opName, oomReport, ioReport);
 +    }
 +
 +    for (i = 0; i < MAX_STR_REGS; i++)

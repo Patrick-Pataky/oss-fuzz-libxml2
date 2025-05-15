@@ -88,12 +88,12 @@ function cmd_apply() {
         fi
 
         echo "${BLUE}Applying ${requested}.patch...${RESET}"
-        git apply --whitespace=fix --ignore-whitespace --ignore-space-at-eol --unsafe-paths "${patch}"
+        git apply --whitespace=fix --ignore-whitespace --unsafe-paths "${patch}"
         echo "${GREEN}Patch applied.${RESET}"
     else
         for patch in "${patch_dir}"/*.patch; do
             echo "${BLUE}Applying $(basename "$patch")...${RESET}"
-            git apply --whitespace=fix --ignore-whitespace --ignore-space-at-eol --unsafe-paths "$patch"
+            git apply --whitespace=fix --ignore-whitespace --unsafe-paths "$patch"
         done
     fi
 
