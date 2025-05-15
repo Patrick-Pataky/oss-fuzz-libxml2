@@ -4,6 +4,8 @@
 
 1. Clone the submodule (the libxml2 library):
 ```bash
+git clone https://github.com/Patrick-Pataky/oss-fuzz-libxml2.git
+cd oss-fuzz-libxml2
 git submodule update --init --recursive
 cd projects/libxml2/libxml2 && git reset --hard 1039cd53
 cd -
@@ -13,6 +15,10 @@ cd -
 ```bash
 python3 infra/helper.py build_image libxml2
 ```
+
+## Report
+
+The report is available at `report.pdf` in the root directory.
 
 ## Parts
 
