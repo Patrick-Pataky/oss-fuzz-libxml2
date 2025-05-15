@@ -42,6 +42,6 @@ COV_PATH="${CURR_PATH}/coverage_improve1"
 rm -rf $COV_PATH
 mkdir -p $COV_PATH
 
-python3 ../../infra/helper.py coverage libxml2 --fuzz-target $1 --corpus-dir $COV_PATH
+python3 ../../infra/helper.py coverage libxml2 --fuzz-target $HARNESS --corpus-dir $COV_PATH
 
 echo "Done!"
